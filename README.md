@@ -29,9 +29,9 @@ Here is the schema and explanation of each variable in the files:
 - time (int) - time in hours since start of test. The data begins at time t=0
 - value - (dict of strings) - either an offer id or transaction amount depending on the record
 # SMART Questions: 
-1. Does the combination of multiple communication channels significantly affect customer responsiveness, spending, and behavior within the dataset?
-2. Is there a discernible correlation in the dataset between customers who receive 'BOGO' and 'discount' offers and their purchasing likelihood, and can we quantify the spending difference over one month?
-3. How can Starbucks create personalized offers based on past purchases and explore the connection between demographic factors (age, gender, income) and offer response patterns?
-4. In what ways can Starbucks leverage regional data to tailor marketing approaches and product offerings to meet the unique preferences of customers in different geographic locations?
-5. How can Starbucks use regional data to customize marketing strategies and product offerings for diverse customer preferences across geographic areas?
+1. Does the combination of multiple communication channels significantly affect customer responsiveness, spending, and behavior within the dataset?              
+2. Are "BOGO" and "discount" offers correlated with the possibility that a customer would make a purchase?
+3. How can Starbucks personalize offers using past purchases and study demographic factors' impact on offer response?
+4. What's the average time between receiving an offer and viewing it, and does this time gap affect conversion rates?
+
 
