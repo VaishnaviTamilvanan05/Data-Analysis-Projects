@@ -1,11 +1,12 @@
 # DATS_6101 - Data Brew: Brewing Success with Starbucks Customer Insights
-# Description of the Dataset: 
-The Starbucks Customer Dataset comprises simulated interactions of 17,000 customers, offering insights into user engagement, the effectiveness of offers, and transaction behaviors on the Starbucks mobile app, encompassing diverse offers, distribution channels, and customer demographic data.
+# Proposal: 
+The Starbucks Customer Dataset simulates interactions and transactions to optimize promotional strategies. It includes diverse offers sent through different channels to 17,000 customers with demographic details. Events capture customer responses and transactions, enabling analysis of offer effectiveness and customer behavior.
+
+Our project aims to determine optimal promotion channels, tailor offers based on customer attributes and actions, and elevate the overall efficiency and effectiveness of Starbucks' marketing efforts. This initiative seeks to maximize customer engagement, elevate customer satisfaction, and drive the success of Starbucks' marketing strategies.
+
 The data is contained in three files:
 - portfolio.csv - data about offers sent to customers (10 offers x 6 columns)
-
 - profile.csv - demographic data of customers (17,000 customers x 5 columns)
-
 - transcript.csv - customer response to offers and transactions made (306,648 events x 4 columns)
 
 Here is the schema and explanation of each variable in the files:
