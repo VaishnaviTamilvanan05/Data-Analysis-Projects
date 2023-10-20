@@ -1,0 +1,64 @@
+---
+title: "Midterm_Project_T6"
+output: html_document
+date: "2023-10-20"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data Brew: Brewing Success with Starbucks Customer Insights
+The data is contained in three files:
+
+portfolio.csv - data about offers sent to customers (10 offers x 6 columns)
+
+profile.csv - demographic data of customers (17,000 customers x 5 columns)
+
+transcript.csv - customer response to offers and transactions made (306,648 events x 4 columns)
+
+
+```{r, results='markup'}
+# Importing and reading the Datasets 
+transcript<-read.csv("transcript.csv")
+head(transcript)
+print("The structure of Transcript:")
+str(transcript)
+
+portfolio<-read.csv("portfolio.csv")
+head(portfolio)
+print("The structure of Portfolio:")
+str(portfolio)
+
+profile<-read.csv("profile.csv")
+head(profile)
+print("The structure of Profile:")
+str(profile)
+```
+```{r, results='markup'}
+#Checking for the Missing values in each column of the dataframes
+transcript_missing_values <- colSums(is.na(transcript))
+print("Missing values in transcript:")
+print(transcript_missing_values)
+
+
+portfolio_missing_values <- colSums(is.na(portfolio))
+print("Missing values in portfolio:")
+print(portfolio_missing_values)
+
+
+profile$gender[profile$gender == ""] <- NA #Filling empty spaces with NA values
+profile_missing_values <- colSums(is.na(profile))
+print("Missing values in profile:")
+print(profile_missing_values)
+```
+```{r}
+
+```
+
+
+
+
+
+
+```
