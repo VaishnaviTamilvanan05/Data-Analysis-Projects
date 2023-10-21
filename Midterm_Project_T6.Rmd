@@ -62,25 +62,47 @@ print(missing_gender_and_income)
 
 ```{r}
 missing_gender_and_income_together <- profile[is.na(profile$gender) & is.na(profile$income), ]
-missing_gender_and_income_together
+head(missing_gender_and_income_together)
 ```
 
 
 ```{r}
 #Remove NA values
 profile_updated <- na.omit(profile)
-profile_updated
+head(profile_updated)
 ```
 ```{r}
 #Checking the columns with numerical data 
 numcols <- names(profile_updated)[sapply(profile_updated, is.numeric)]
-numcols
+head(numcols)
 
 ```
 
 ```{r}
 #Converting became_member_on to datetime format
 profile_updated$became_member_on <- as.Date(as.character(profile_updated$became_member_on), format = "%Y%m%d")
-profile_updated
+head(profile_updated)
 
+```
+```{r}
+#Drop the unnecessary first Column in transcript
+transcript <- transcript[, -1]
+head(transcript)
+```
+```{r}
+#check transcript data frame data types
+transcript_data_types <- sapply(transcript, class)
+print(transcript_data_types)
+```
+```{r}
+#convert time in hours to number of days 
+library(dplyr)
+transcript <- transcript %>% 
+  mutate(time = time / 24)
+```
+```{r}
+#Rename columns 
+colnames(transcript)[colnames(transcript) == "time"] <- "days_elapsed"
+colnames(transcript)[colnames(transcript) == "person"] <- "customer_id"
+tail(transcript)
 ```
