@@ -20,17 +20,17 @@ transcript.csv - customer response to offers and transactions made (306,648 even
 
 ```{r, results='markup'}
 # Importing and reading the Datasets 
-transcript<-read.csv("transcript.csv")
+transcript<-read.csv("data/transcript.csv")
 head(transcript)
 print("The structure of Transcript:")
 str(transcript)
 
-portfolio<-read.csv("portfolio.csv")
+portfolio<-read.csv("data/portfolio.csv")
 head(portfolio)
 print("The structure of Portfolio:")
 str(portfolio)
 
-profile<-read.csv("profile.csv")
+profile<-read.csv("data/profile.csv")
 head(profile)
 print("The structure of Profile:")
 str(profile)
