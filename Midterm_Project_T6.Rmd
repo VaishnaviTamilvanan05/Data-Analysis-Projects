@@ -52,13 +52,35 @@ profile_missing_values <- colSums(is.na(profile))
 print("Missing values in profile:")
 print(profile_missing_values)
 ```
-```{r}
 
+```{r}
+#Checking count of missing values if they are from the same observations
+missing_gender_and_income <- sum(is.na(profile$gender) & is.na(profile$income))
+print("Count of missing values in both gender and income:")
+print(missing_gender_and_income)
+```
+
+```{r}
+missing_gender_and_income_together <- profile[is.na(profile$gender) & is.na(profile$income), ]
+missing_gender_and_income_together
 ```
 
 
+```{r}
+#Remove NA values
+profile_updated <- na.omit(profile)
+profile_updated
+```
+```{r}
+#Checking the columns with numerical data 
+numcols <- names(profile_updated)[sapply(profile_updated, is.numeric)]
+numcols
 
+```
 
-
+```{r}
+#Converting became_member_on to datetime format
+profile_updated$became_member_on <- as.Date(as.character(profile_updated$became_member_on), format = "%Y%m%d")
+profile_updated
 
 ```
