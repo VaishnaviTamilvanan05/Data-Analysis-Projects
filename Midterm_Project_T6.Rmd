@@ -9,6 +9,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Data Brew: Brewing Success with Starbucks Customer Insights
+
 The data is contained in three files:
 
 portfolio.csv - data about offers sent to customers (10 offers x 6 columns)
@@ -17,92 +18,124 @@ profile.csv - demographic data of customers (17,000 customers x 5 columns)
 
 transcript.csv - customer response to offers and transactions made (306,648 events x 4 columns)
 
-
 ```{r, results='markup'}
 # Importing and reading the Datasets 
-transcript<-read.csv("data/transcript.csv")
-head(transcript)
+df_cust_offer<-read.csv("data/transcript.csv")
+head(df_cust_offer)
 print("The structure of Transcript:")
-str(transcript)
+str(df_cust_offer)
 
-portfolio<-read.csv("data/portfolio.csv")
-head(portfolio)
+df_offers<-read.csv("data/portfolio.csv")
+head(df_offers)
 print("The structure of Portfolio:")
-str(portfolio)
+str(df_offers)
 
-profile<-read.csv("data/profile.csv")
+df_cust<-read.csv("data/profile.csv")
 head(profile)
 print("The structure of Profile:")
 str(profile)
 ```
+
 ```{r, results='markup'}
 #Checking for the Missing values in each column of the dataframes
-transcript_missing_values <- colSums(is.na(transcript))
+cust_offer_missing_values <- colSums(is.na(df_cust_offer))
 print("Missing values in transcript:")
-print(transcript_missing_values)
+print(cust_offer_missing_values)
 
 
-portfolio_missing_values <- colSums(is.na(portfolio))
+offers_missing_values <- colSums(is.na(df_offers))
 print("Missing values in portfolio:")
-print(portfolio_missing_values)
+print(offers_missing_values)
 
 
-profile$gender[profile$gender == ""] <- NA #Filling empty spaces with NA values
-profile_missing_values <- colSums(is.na(profile))
+df_cust$gender[df_cust$gender == ""] <- NA #Filling empty spaces with NA values
+cust_missing_values <- colSums(is.na(df_cust))
 print("Missing values in profile:")
-print(profile_missing_values)
+print(cust_missing_values)
 ```
 
 ```{r}
 #Checking count of missing values if they are from the same observations
-missing_gender_and_income <- sum(is.na(profile$gender) & is.na(profile$income))
+missing_gender_and_income <- sum(is.na(df_cust$gender) & is.na(df_cust$income))
 print("Count of missing values in both gender and income:")
 print(missing_gender_and_income)
 ```
 
 ```{r}
-missing_gender_and_income_together <- profile[is.na(profile$gender) & is.na(profile$income), ]
+missing_gender_and_income_together <- df_cust[is.na(df_cust$gender) & is.na(df_cust$income), ]
 head(missing_gender_and_income_together)
 ```
 
+```{r}
+missing_gender_and_income_together <- df_cust[is.na(df_cust$gender) & is.na(df_cust$income), ]
+head(missing_gender_and_income_together)
+```
 
 ```{r}
 #Remove NA values
-profile_updated <- na.omit(profile)
-head(profile_updated)
+df_cust_updated <- na.omit(df_cust)
+head(df_cust_updated)
 ```
+
 ```{r}
 #Checking the columns with numerical data 
-numcols <- names(profile_updated)[sapply(profile_updated, is.numeric)]
+numcols <- names(df_cust_updated)[sapply(df_cust_updated, is.numeric)]
 head(numcols)
-
 ```
 
 ```{r}
 #Converting became_member_on to datetime format
-profile_updated$became_member_on <- as.Date(as.character(profile_updated$became_member_on), format = "%Y%m%d")
-head(profile_updated)
-
+df_cust_updated$became_member_on <- as.Date(as.character(df_cust_updated$became_member_on), format = "%Y%m%d")
+head(df_cust_updated)
 ```
+
 ```{r}
 #Drop the unnecessary first Column in transcript
-transcript <- transcript[, -1]
-head(transcript)
+df_cust_offer <- df_cust_offer[, -1]
+head(df_cust_offer)
 ```
+
 ```{r}
 #check transcript data frame data types
-transcript_data_types <- sapply(transcript, class)
-print(transcript_data_types)
+df_cust_offer_dtypes <- sapply(df_cust_offer, class)
+print(df_cust_offer_dtypes)
 ```
+
 ```{r}
 #convert time in hours to number of days 
 library(dplyr)
-transcript <- transcript %>% 
+df_cust_offer <- df_cust_offer %>% 
   mutate(time = time / 24)
 ```
+
 ```{r}
 #Rename columns 
-colnames(transcript)[colnames(transcript) == "time"] <- "days_elapsed"
-colnames(transcript)[colnames(transcript) == "person"] <- "customer_id"
-tail(transcript)
+colnames(df_cust_offer)[colnames(df_cust_offer) == "time"] <- "days_elapsed"
+colnames(df_cust_offer)[colnames(df_cust_offer) == "person"] <- "customer_id"
+tail(df_cust_offer)
+```
+
+## **Data Transformation:**
+
+### **Transform `df_offers`**
+
+Add an alias to each offer for easier recognition and referencing.
+
+```{r}
+#before transforming
+head(df_offers)
+```
+
+```{r}
+# Load required library
+library(dplyr)
+# Sort df_offer by offer_type and difficulty
+df_offers <- df_offers %>%
+  arrange(offer_type, difficulty) %>%
+  mutate(index = row_number()) %>%
+  select(-index)
+
+# Add the offer_alias column
+df_offers$offer_alias <- LETTERS[1:nrow(df_offers)]
+head(df_offers)
 ```
