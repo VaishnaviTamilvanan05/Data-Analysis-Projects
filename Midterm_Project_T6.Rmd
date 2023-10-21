@@ -81,6 +81,6 @@ numcols
 ```{r}
 #Converting became_member_on to datetime format
 profile_updated$became_member_on <- as.Date(as.character(profile_updated$became_member_on), format = "%Y%m%d")
-profile_updated
+head(profile_updated)
 
 ```
