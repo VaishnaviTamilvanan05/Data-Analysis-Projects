@@ -140,6 +140,7 @@ df_offers$offer_alias <- LETTERS[1:nrow(df_offers)]
 head(df_offers)
 ```
 
+### **Transform `df_cust_offer`**
 
 ```{r}
 # Extract the 'customer_id' and 'event' columns
@@ -190,6 +191,8 @@ ggplot(event_counts_df, aes(x = event, y = count)) +
 
 
 ```
+
+
 Observations:
 
 1. The dataset contains 138,953 transactions, which is more than four times the number of completed offers. This suggests that many customers made multiple purchases without the influence of an offer. This indicates a high level of customer loyalty, which is expected, given that Starbucks primarily offers fast-moving consumer goods such as coffee and food.
