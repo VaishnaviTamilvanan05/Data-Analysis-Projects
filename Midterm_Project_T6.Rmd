@@ -139,3 +139,28 @@ df_offers <- df_offers %>%
 df_offers$offer_alias <- LETTERS[1:nrow(df_offers)]
 head(df_offers)
 ```
+
+
+```{r}
+# Extract the 'customer_id' and 'event' columns
+df_cust_offer_subset <- df_cust_offer[, c("customer_id", "event")]
+ 
+# Split the 'value' column into 'dict_key' and 'dict_value'
+df_cust_offer_subset$dict_key <- sapply(strsplit(df_cust_offer$value, "[:,]") , "[[", 1)
+df_cust_offer_subset$dict_value <- sapply(strsplit(df_cust_offer$value, "[:,]") , "[[", 2)
+ 
+# Remove any leading/trailing white spaces
+df_cust_offer_subset$dict_key <- trimws(df_cust_offer_subset$dict_key)
+df_cust_offer_subset$dict_value <- trimws(df_cust_offer_subset$dict_value)
+ 
+# Remove unwanted characters, including brackets and spaces, from 'dict_key' and 'dict_value'
+df_cust_offer_subset$dict_key <- gsub("[{}',\";]", "", df_cust_offer_subset$dict_key)
+df_cust_offer_subset$dict_value <- gsub("[{}',\";]", "", df_cust_offer_subset$dict_value)
+# Display the resulting data frame
+head(df_cust_offer_subset)
+```
+```{r}
+df_cust_offer<- df_cust_offer_subset
+head(df_cust_offer)
+```
+
