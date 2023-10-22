@@ -143,19 +143,19 @@ head(df_offers)
 
 ```{r}
 # Extract the 'customer_id' and 'event' columns
-df_cust_offer_subset <- df_cust_offer[, c("customer_id", "event")]
+df_cust_offer_subset <- df_cust_offer[, c("customer_id", "event","days_elapsed")]
  
-# Split the 'value' column into 'dict_key' and 'dict_value'
-df_cust_offer_subset$dict_key <- sapply(strsplit(df_cust_offer$value, "[:,]") , "[[", 1)
-df_cust_offer_subset$dict_value <- sapply(strsplit(df_cust_offer$value, "[:,]") , "[[", 2)
+# Split the 'value' column into 'value_key' and 'value_data'
+df_cust_offer_subset$value_key <- sapply(strsplit(df_cust_offer$value, "[:,]") , "[[", 1)
+df_cust_offer_subset$value_data <- sapply(strsplit(df_cust_offer$value, "[:,]") , "[[", 2)
  
 # Remove any leading/trailing white spaces
-df_cust_offer_subset$dict_key <- trimws(df_cust_offer_subset$dict_key)
-df_cust_offer_subset$dict_value <- trimws(df_cust_offer_subset$dict_value)
+df_cust_offer_subset$value_key <- trimws(df_cust_offer_subset$value_key)
+df_cust_offer_subset$value_data <- trimws(df_cust_offer_subset$value_data)
  
-# Remove unwanted characters, including brackets and spaces, from 'dict_key' and 'dict_value'
-df_cust_offer_subset$dict_key <- gsub("[{}',\";]", "", df_cust_offer_subset$dict_key)
-df_cust_offer_subset$dict_value <- gsub("[{}',\";]", "", df_cust_offer_subset$dict_value)
+# Remove unwanted characters, including brackets and spaces, from 'value_key' and 'value_data'
+df_cust_offer_subset$value_key <- gsub("[{}',\";]", "", df_cust_offer_subset$value_key)
+df_cust_offer_subset$value_data <- gsub("[{}',\";]", "", df_cust_offer_subset$value_data)
 # Display the resulting data frame
 head(df_cust_offer_subset)
 ```
@@ -163,4 +163,61 @@ head(df_cust_offer_subset)
 df_cust_offer<- df_cust_offer_subset
 head(df_cust_offer)
 ```
+## **EDA on transcripts data:**
 
+```{r}
+library(ezids)
+# Get value counts for the 'event' column
+event_value_counts <- table(df_cust_offer$event)
+
+# Print the value counts
+xkabledply(event_value_counts)
+
+```
+```{r}
+library(ggplot2)
+
+# Create a data frame from the event counts
+event_counts_df <- data.frame(event = names(event_value_counts), count = as.numeric(event_value_counts))
+
+# Create a bar chart using ggplot
+ggplot(event_counts_df, aes(x = event, y = count)) +
+  geom_bar(stat = "identity", fill = "blue") +
+  labs(title = "Bar Chart of Event Counts", x = "Event", y = "Count") +
+  theme_minimal()+
+  scale_y_continuous(breaks = seq(0, max(event_counts_df$count), by = 20000))
+
+
+
+```
+Observations:
+
+1. The dataset contains 138,953 transactions, which is more than four times the number of completed offers. This suggests that many customers made multiple purchases without the influence of an offer. This indicates a high level of customer loyalty, which is expected, given that Starbucks primarily offers fast-moving consumer goods such as coffee and food.
+
+2. During the campaign month, around 76,277 offers were sent to customers, and a remarkable 76% of these offers were viewed by customers. This high view rate reflects active customer engagement and suggests that the promotional slogans and design were effective in attracting customer attention.
+
+3. And 33,579 offers were completed, accounting for 58% of the viewed offers and 44% of all the offers sent. This relatively high offer completion rate is indicative of strong customer loyalty, likely indicating a substantial number of regular customers who regularly participate in Starbucks' promotions.
+
+
+```{r}
+
+#Print min and max of days elapsed
+min_days_elapsed <- min(df_cust_offer$days_elapsed)
+max_days_elapsed <- max(df_cust_offer$days_elapsed)
+
+cat("Minimum days_elapsed:", min_days_elapsed, "\n")
+cat("Maximum days_elapsed:", max_days_elapsed, "\n")
+
+```
+```{r}
+library(ggplot2)
+# Create a histogram
+ggplot(df_cust_offer, aes(x = days_elapsed)) +
+  geom_histogram(bins = 30, fill = "brown", color = "black") +
+  labs(x = "Days", y = "Events Count", title = "Events Occurrence over Time") +
+  theme_minimal() +
+  theme(axis.text = element_text(size = 14), axis.title = element_text(size = 14), plot.title = element_text(size = 16))
+
+```
+
+The above plot reveals six distinct peaks of events during the campaign, primarily associated with the reception of offers, followed by subsequent events like offer views, completions, and purchases.
