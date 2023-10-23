@@ -258,27 +258,7 @@ head(df_customer_no_na)
 customers <- data.frame(df_customer_no_na)
 ```
 
-### Univariate Analysis - `gender`
-
-```{r}
-# Calculate the wedge sizes and labels
-wedge_size <- table(df_customer_no_na$gender)
-wedge_label <- c("Male", "Female", "Other")
-
-# Calculate percentages
-total_count <- sum(wedge_size)
-percentages <- 100 * wedge_size / total_count
-percentages <- round(percentages, 1)
-
-# Create a pie chart with improved aesthetics
-colors <- c("lightblue", "lightgreen", "lightcoral")
-par(mar = c(1, 1, 1, 1))  # Adjust margins for better appearance
-pie(wedge_size, labels = paste(wedge_label, "\n", percentages, "%"), col = colors, main = "Gender")
-legend("topright", legend = wedge_label, fill = colors, title = "Gender")
-
-```
-
-**Observations:** The customer base consists of a larger proportion of males (57.2%) compared to females (41.3%), with a minor representation (1.4%) from customers identifying with other genders.
+## *What is the profile of the customer base, including their gender distribution, age distribution, and income range, and how do these factors relate to each other?*
 
 ### Univariate Analysis - `age`
 
@@ -293,7 +273,10 @@ par(cex.lab = 1.5)
 
 # Print descriptive statistics
 summary(customers$age)
+age_sd <- sd(customers$age)
 
+# Print the standard deviation
+cat("Standard Deviation of Age:", age_sd, "\n")
 ```
 
 #### **Observations:**
@@ -301,6 +284,45 @@ summary(customers$age)
 -   The customer age range spans from 18 years as the youngest to 101 years as the oldest.
 
 -   The distribution of customer ages appears to approximate a normal distribution, with a mean and standard deviation of approximately 54 and 17, respectively.
+
+### Univariate Analysis - `gender`
+
+```{r}
+library(ggplot2)
+library(plotly)
+
+# Create a data frame with the count of each gender category
+gender_counts <- table(customers$gender)
+
+# Calculate percentages
+gender_percentages <- round((gender_counts / sum(gender_counts)) * 100, 1)
+
+# Define custom colors
+custom_colors <- c("#FF6F61", "#6B5B95", "#88B04B")  # You can use any color codes you like
+
+# Create the 3D pie chart
+pie_chart <- plot_ly(
+  labels = names(gender_counts),
+  values = gender_counts,
+  type = "pie",
+  textinfo = "label+percent",
+  marker = list(colors = custom_colors),
+  pull = c(0.1, 0.1, 0.2)  # Adjust pull for exploding wedges
+) %>%
+  layout(
+    title = "Gender Distribution",
+    scene = list(
+      aspectmode = "cube",  # Center the chart
+      camera = list(eye = list(x = 1.25, y = 1.25, z = 0.85))  # 3D view settings
+    ),
+    showlegend = FALSE
+  )
+
+# Display the 3D pie chart
+pie_chart
+```
+
+**Observations:** The customer base consists of a larger proportion of males (57.2%) compared to females (41.3%), with a minor representation (1.4%) from customers identifying with other genders.
 
 #### Dividing customers into age groups:
 
@@ -402,6 +424,138 @@ legend("topright", legend = paste(levels(customers$income_group), " (", income_g
 -   Dominant Income Groups: The top two income groups are those earning 60-75k and 45-60k annually, collectively representing around 50% of the customer base.
 
 -   Resemblance to Population: The income distribution among customers closely mirrors that of the general population. However, individuals with very low income might face challenges affording frequent visits to cafes, while those with extremely high income might opt for alternative coffee enjoyment methods.
+
+### Bivariate Analysis - `age` vs `gender`
+
+```{r}
+# Load the ggplot2 library
+library(ggplot2)
+
+# Create a 2D scatterplot with additional aesthetics
+ggplot(customers, aes(x = gender, y = age, color = gender)) +
+  geom_jitter(width = 0.3, alpha = 0.7, size = 1) +  # Adjust point size for a 3D effect
+  labs(title = "Scatterplot of Age vs Gender", x = "Gender", y = "Age") +
+  scale_color_manual(values = c("#E41A1C", "#377EB8", "#4DAF4A")) +  # Custom colors
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5), 
+        panel.grid.major.y = element_line(color = "gray90"),
+        axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for better visibility
+```
+
+**Observations:**
+
+-   **Women are more likely to visit Starbucks than men.** This is because there are more women in the 20-30 age range, which is the most common age range for Starbucks customers.
+
+-   **Men are more likely to visit Starbucks in their 40s and 50s, while women are more likely to visit Starbucks in their 30s and 40s.**
+
+-   **There is a slight correlation between age and gender, with younger customers being more likely to be female and older customers being more likely to be male.**
+
+### Bivariate Analysis - `income` vs `gender`
+
+```{r}
+# Calculate the mean income for females
+mean_income_female <- mean(customers$income[customers$gender == "F"], na.rm = TRUE)
+
+# Calculate the mean income for males
+mean_income_male <- mean(customers$income[customers$gender == "M"], na.rm = TRUE)
+
+mean_income_others <- mean(customers$income[customers$gender == "O"], na.rm = TRUE)
+# Print the results
+cat("Mean Income for Females: $", round(mean_income_female, 2), "\n")
+cat("Mean Income for Males: $", round(mean_income_male, 2), "\n")
+cat("Mean Income for Males: $", round(mean_income_others, 2), "\n")
+
+```
+
+```{r}
+# Load the ggplot2 library
+library(ggplot2)
+
+# Create a scatterplot
+ggplot(customers, aes(x = gender, y = income, color = gender)) +
+  geom_jitter(width = 0.3, alpha = 0.7, size = 1) +
+  labs(title = "Scatterplot of Income vs Gender", x = "Gender", y = "Income") +
+  scale_color_manual(values = c("#E41A1C", "#377EB8", "#4DAF4A")) +  # Custom colors
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),
+        panel.grid.major.y = element_line(color = "gray90"),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+#### Observations:
+
+-   Male customers have a right-skewed income distribution, indicating that a larger proportion of male customers falls within the lower half of the income spectrum among the company's customer base.
+
+-   Female customers have a significantly higher average income compared to customers of other genders. This disparity in income may be attributed to the assumption that female customers, on average, are older than customers in other gender groups.
+
+-   On average, female customers have an income of \$71,000, while male customers have an average income of \$61,000. Customers of other genders have an average income of \$63,000.
+
+### Bivariate Analysis - `income` vs `age`
+
+```{r}
+# Load required libraries
+library(ggplot2)
+library(dplyr)
+
+# Create a summary dataframe
+summary_data <- customers %>%
+  group_by(age_group) %>%
+  summarize(mean_income = mean(income))
+
+# Create the barplot
+ggplot(summary_data, aes(x = age_group, y = mean_income, fill = age_group)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Age Group", y = "Income") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for better readability
+```
+
+#### Observations:
+
+-   Customers in the two younger age groups (18-35 years old) have an average annual income of approximately \$51,000 USD.
+
+-   The middle age groups (36-55 years old) exhibit an average annual income of about \$65,000 USD.
+
+-   All age groups above 56 years old display very similar average annual incomes, hovering around \$70,000 USD.
+
+-   On average, older customers of the company tend to have higher incomes.
+
+-   The company's customers across all age groups have substantially higher average incomes compared to the median income of US citizens in 2018, which stood at \$30,119 USD.
+
+-   The use of the 2018 median income as a benchmark is justified because the dataset contains records only up to July 2018, and customer profile data, including income, is typically not frequently updated. Hence, it's more relevant to compare customer income with the population's income in the year they last became members.
+
+### `income` vs `gender` vs `age`
+
+```{r}
+# Load necessary libraries
+library(plotly)
+library(dplyr)
+
+# Create a 3D scatterplot with Plotly
+scatter_3d <- customers %>%
+  plot_ly(x = ~age, y = ~income, z = ~gender, color = ~gender, colors = c("#E41A1C", "#377EB8", "#4DAF4A"),
+          type = "scatter3d", mode = "markers",
+          marker = list(size = 2)) %>%
+  layout(scene = list(xaxis = list(title = "Age"),
+                     yaxis = list(title = "Income"),
+                     zaxis = list(title = "Gender")))
+
+# Show the 3D scatterplot
+scatter_3d
+```
+
+#### **Observation:**
+
+-   **Income tends to increase with age for both men and women.** This is evident from the fact that the scatterplot shows a general upward trend from left to right.
+
+-   Another interesting thing we can observe is that female customers with higher incomes, on average, are older than customers in other gender groups.
+
+#### Answer to SMART question based on the above analysis:
+
+***-\>The customer base consists of a larger proportion of males (57.2%) compared to females (41.3%), with a minor representation (1.4%) from customers identifying with other genders. The customer age range spans from 18 years as the youngest to 101 years as the oldest. The income of customers spans from 30k to 120k, with an average income of 65.4k. The income distribution closely mirrors that of the general population. There is a logical relationship between age and cafe visits, as individuals between 46 and 75 years tend to have more available time to visit cafes. The income distribution varies between genders, with females having higher average incomes.***
+
+## *How has the customer base evolved over time, both in terms of new member sign-ups and member growth, and are there any notable trends or changes?*
 
 ### Univariate Analysis - `became_member_on`
 
@@ -608,143 +762,6 @@ ggplot(data = df_member, aes(x = factor(day_name, levels = c("Monday", "Tuesday"
 
 -   On average, Friday had the fewest new members, making it the day with the lowest member sign-ups.
 
-### Bivariate Analysis - `age` vs `gender`
+#### Answer to SMART question based on the above analysis:
 
-```{r}
-# Load the required libraries if not already loaded
-library(dplyr)
-library(ggplot2)
-
-# Data aggregation - mean age by gender
-customers_aggregated <- customers %>%
-  group_by(gender) %>%
-  summarize(mean_age = mean(age))
-
-# Print the mean age by gender
-print(customers_aggregated)
-
-# Create a KDE plot for age vs. gender
-ggplot(data = customers, aes(x = age, fill = gender)) +
-  geom_density(alpha = 0.5) +
-  labs(
-    title = "Age vs Gender",
-    x = "Age",
-    y = "Density"
-  ) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(size = 16)
-  )
-
-```
-
-```{r}
-# Load the necessary libraries if not already loaded
-library(ggplot2)
-
-# Calculate the mean age by gender
-mean_age_by_gender <- aggregate(age ~ gender, data = customers, FUN = mean)
-
-# Print the mean age by gender
-print(mean_age_by_gender)
-
-# Create a density plot with enhanced spreading on both axes
-ggplot(data = customers, aes(x = age, fill = gender)) +
-  geom_density(alpha = 0.6, adjust = 2) +
-  labs(
-    title = "Age vs Gender",
-    x = "Age",
-    y = "Density"
-  ) +
-  ylim(0, 0.04) +  # Adjust the y-axis limits
-  theme_minimal() +
-  theme(
-    axis.text.x = element_text(size = 12),
-    axis.text.y = element_text(size = 12),
-    axis.title.x = element_text(size = 14)
-  )
-
-```
-
-### Bivariate Analysis - `income` vs `gender`
-
-```{r}
-# Load the necessary libraries if not already loaded
-library(ggplot2)
-library(scales)
-
-# Create a custom scaling factor for the y-axis labels
-scaling_factor <- 1e5  # Adjust this factor as needed
-
-# Create a density plot for income vs gender with increased spread on both axes
-ggplot(customers, aes(x = income, fill = gender)) +
-  geom_density(alpha = 0.5) +
-  labs(
-    title = "Income vs Gender",
-    x = "Income",
-    y = "Density"
-  ) +
-  scale_x_continuous(limits = c(0, 150000), breaks = seq(0, 150000, by = 20000)) +  # Adjust x-axis limits and breaks
-  scale_y_continuous(labels = scales::number_format(scale = scaling_factor), limits = c(0, 0.000020)) +  # Adjust y-axis limits
-  theme_minimal() +
-  theme(
-    axis.text.x = element_text(size = 12),
-    axis.text.y = element_text(size = 12),
-    axis.title.x = element_text(size = 14)
-  )
-
-```
-
-#### Observations:
-
--   The income distribution of female customers exhibits a nearly normal distribution, suggesting that female customers across the entire income range tend to enjoy the company's products.
-
--   Male customers, on the other hand, have a right-skewed income distribution, indicating that a larger proportion of male customers falls within the lower half of the income spectrum among the company's customer base.
-
--   Female customers have a significantly higher average income compared to customers of other genders. This disparity in income may be attributed to the assumption that female customers, on average, are older than customers in other gender groups. It will be examined whether this assumption holds true in the following analysis.
-
--   On average, female customers have an income of \$71,000, while male customers have an average income of \$61,000. Customers of other genders have an average income of \$63,000.
-
-### Bivariate Analysis - `income` vs `age`
-
-```{r}
-head(customers)
-customers$income
-```
-
-```{r}
-customers$age_group
-```
-
-```{r}
-# Load required libraries
-library(ggplot2)
-library(dplyr)
-
-# Create a summary dataframe
-summary_data <- customers %>%
-  group_by(age_group) %>%
-  summarize(mean_income = mean(income))
-
-# Create the barplot
-ggplot(summary_data, aes(x = age_group, y = mean_income, fill = age_group)) +
-  geom_bar(stat = "identity") +
-  labs(x = "Age Group", y = "Income") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for better readability
-
-```
-
-#### Observations: 
-
--   Customers in the two younger age groups (18-35 years old) have an average annual income of approximately \$51,000 USD.
-
--   The middle age groups (36-55 years old) exhibit an average annual income of about \$65,000 USD.
-
--   All age groups above 56 years old display very similar average annual incomes, hovering around \$70,000 USD.
-
--   On average, older customers of the company tend to have higher incomes.
-
--   The company's customers across all age groups have substantially higher average incomes compared to the median income of US citizens in 2018, which stood at \$30,119 USD.
-
--   The use of the 2018 median income as a benchmark is justified because the dataset contains records only up to July 2018, and customer profile data, including income, is typically not frequently updated. Hence, it's more relevant to compare customer income with the population's income in the year they last became members.
+***-\> The dataset includes customers who became members between July 2013 and July 2018. Daily member growth increased significantly from the middle of 2015, with a substantial spike in growth from the middle of 2017, suggesting successful campaigns during these periods. However, there was a noticeable decline in early 2018, indicating that new strategies implemented at that time may have had a negative impact on member growth. August, October, and December experienced the highest influx of new members, with weekends and Tuesdays showing higher member growth. The data indicates fluctuations in member growth over time.***
