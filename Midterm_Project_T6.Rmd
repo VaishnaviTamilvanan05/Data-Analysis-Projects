@@ -21,19 +21,22 @@ transcript.csv - customer response to offers and transactions made (306,648 even
 ```{r, results='markup'}
 # Importing and reading the Datasets 
 df_cust_offer<-read.csv("data/transcript.csv")
+# df_cust_offer <- df_cust_offer[, -1]
 head(df_cust_offer)
 print("The structure of Transcript:")
 str(df_cust_offer)
 
 df_offers<-read.csv("data/portfolio.csv")
+df_offers<- df_offers[, -1]
 head(df_offers)
 print("The structure of Portfolio:")
 str(df_offers)
 
 df_cust<-read.csv("data/profile.csv")
-head(profile)
+df_cust<- df_cust[, -1]
+head(df_cust)
 print("The structure of Profile:")
-str(profile)
+str(df_cust)
 ```
 
 ```{r, results='markup'}
@@ -55,6 +58,12 @@ print(cust_missing_values)
 ```
 
 ```{r}
+missing_gender <- df_cust[is.na(df_cust$gender), ]
+missing_income <- df_cust[is.na(df_cust$income), ]
+sum(missing_gender$id == missing_income$id)
+```
+
+```{r}
 #Checking count of missing values if they are from the same observations
 missing_gender_and_income <- sum(is.na(df_cust$gender) & is.na(df_cust$income))
 print("Count of missing values in both gender and income:")
@@ -62,36 +71,41 @@ print(missing_gender_and_income)
 ```
 
 ```{r}
-missing_gender_and_income_together <- df_cust[is.na(df_cust$gender) & is.na(df_cust$income), ]
-head(missing_gender_and_income_together)
+# Identify 'id' values to remove
+id_to_remove <- missing_income$id
+
+# Create a new dataframe without the rows where 'id' is in 'id_to_remove'
+df_customer_no_na <- df_cust[!df_cust$id %in% id_to_remove, ]
+
+# Reset the row indices
+rownames(df_customer_no_na) <- NULL
+
+# Display information about the resulting dataframe
+str(df_customer_no_na)
+#There are no NA values in df_customer_no_na
+sum(is.na(df_customer_no_na))
 ```
 
 ```{r}
 missing_gender_and_income_together <- df_cust[is.na(df_cust$gender) & is.na(df_cust$income), ]
 head(missing_gender_and_income_together)
-```
-
-```{r}
-#Remove NA values
-df_cust_updated <- na.omit(df_cust)
-head(df_cust_updated)
 ```
 
 ```{r}
 #Checking the columns with numerical data 
-numcols <- names(df_cust_updated)[sapply(df_cust_updated, is.numeric)]
-head(numcols)
+cust_numcols <- names(df_customer_no_na)[sapply(df_customer_no_na, is.numeric)]
+head(cust_numcols)
 ```
 
 ```{r}
 #Converting became_member_on to datetime format
-df_cust_updated$became_member_on <- as.Date(as.character(df_cust_updated$became_member_on), format = "%Y%m%d")
-head(df_cust_updated)
+df_customer_no_na$became_member_on <- as.Date(as.character(df_customer_no_na$became_member_on), format = "%Y%m%d")
+head(df_customer_no_na)
 ```
 
 ```{r}
 #Drop the unnecessary first Column in transcript
-df_cust_offer <- df_cust_offer[, -1]
+# df_cust_offer <- df_cust_offer[, -1]
 head(df_cust_offer)
 ```
 
@@ -160,10 +174,12 @@ df_cust_offer_subset$value_data <- gsub("[{}',\";]", "", df_cust_offer_subset$va
 # Display the resulting data frame
 head(df_cust_offer_subset)
 ```
+
 ```{r}
 df_cust_offer<- df_cust_offer_subset
 head(df_cust_offer)
 ```
+
 ## **EDA on transcripts data:**
 
 ```{r}
@@ -175,6 +191,7 @@ event_value_counts <- table(df_cust_offer$event)
 xkabledply(event_value_counts)
 
 ```
+
 ```{r}
 library(ggplot2)
 
@@ -192,15 +209,13 @@ ggplot(event_counts_df, aes(x = event, y = count)) +
 
 ```
 
-
 Observations:
 
-1. The dataset contains 138,953 transactions, which is more than four times the number of completed offers. This suggests that many customers made multiple purchases without the influence of an offer. This indicates a high level of customer loyalty, which is expected, given that Starbucks primarily offers fast-moving consumer goods such as coffee and food.
+1.  The dataset contains 138,953 transactions, which is more than four times the number of completed offers. This suggests that many customers made multiple purchases without the influence of an offer. This indicates a high level of customer loyalty, which is expected, given that Starbucks primarily offers fast-moving consumer goods such as coffee and food.
 
-2. During the campaign month, around 76,277 offers were sent to customers, and a remarkable 76% of these offers were viewed by customers. This high view rate reflects active customer engagement and suggests that the promotional slogans and design were effective in attracting customer attention.
+2.  During the campaign month, around 76,277 offers were sent to customers, and a remarkable 76% of these offers were viewed by customers. This high view rate reflects active customer engagement and suggests that the promotional slogans and design were effective in attracting customer attention.
 
-3. And 33,579 offers were completed, accounting for 58% of the viewed offers and 44% of all the offers sent. This relatively high offer completion rate is indicative of strong customer loyalty, likely indicating a substantial number of regular customers who regularly participate in Starbucks' promotions.
-
+3.  And 33,579 offers were completed, accounting for 58% of the viewed offers and 44% of all the offers sent. This relatively high offer completion rate is indicative of strong customer loyalty, likely indicating a substantial number of regular customers who regularly participate in Starbucks' promotions.
 
 ```{r}
 
@@ -212,6 +227,7 @@ cat("Minimum days_elapsed:", min_days_elapsed, "\n")
 cat("Maximum days_elapsed:", max_days_elapsed, "\n")
 
 ```
+
 ```{r}
 library(ggplot2)
 # Create a histogram
@@ -224,3 +240,502 @@ ggplot(df_cust_offer, aes(x = days_elapsed)) +
 ```
 
 The above plot reveals six distinct peaks of events during the campaign, primarily associated with the reception of offers, followed by subsequent events like offer views, completions, and purchases.
+
+### **EDA on Customer Data:**
+
+```{r}
+head(df_customer_no_na)
+# Save checkpoint after data cleaning
+customers <- data.frame(df_customer_no_na)
+```
+
+### Univariate Analysis - `gender`
+
+```{r}
+# Calculate the wedge sizes and labels
+wedge_size <- table(df_customer_no_na$gender)
+wedge_label <- c("Male", "Female", "Other")
+
+# Calculate percentages
+total_count <- sum(wedge_size)
+percentages <- 100 * wedge_size / total_count
+percentages <- round(percentages, 1)
+
+# Create a pie chart with improved aesthetics
+colors <- c("lightblue", "lightgreen", "lightcoral")
+par(mar = c(1, 1, 1, 1))  # Adjust margins for better appearance
+pie(wedge_size, labels = paste(wedge_label, "\n", percentages, "%"), col = colors, main = "Gender")
+legend("topright", legend = wedge_label, fill = colors, title = "Gender")
+
+```
+
+**Observations:** The customer base consists of a larger proportion of males (57.2%) compared to females (41.3%), with a minor representation (1.4%) from customers identifying with other genders.
+
+### Univariate Analysis - `age`
+
+```{r}
+# Create a side-by-side boxplot and histogram
+par(mfrow = c(1, 2), mar = c(5, 4, 4, 2))
+boxplot(customers$age, xlab = "Age", main = "Boxplot", col = "lightblue")
+hist(customers$age, xlab = "Age", main = "Histogram", col = "lightblue")
+
+# Adjust axis label sizes
+par(cex.lab = 1.5)
+
+# Print descriptive statistics
+summary(customers$age)
+
+```
+
+#### **Observations:**
+
+-   The customer age range spans from 18 years as the youngest to 101 years as the oldest.
+
+-   The distribution of customer ages appears to approximate a normal distribution, with a mean and standard deviation of approximately 54 and 17, respectively.
+
+#### Dividing customers into age groups:
+
+```{r}
+# Define the age bins and labels
+age_bins <- c(customers$age %>% min(), 26, 36, 46, 56, 66, 76, 86, customers$age %>% max())
+age_labels <- c('18-25ys', '26-35ys', '36-45ys', '46-55ys', '56-65ys', '66-75ys', '76-85ys', '> 86ys')
+
+# Create the age_group column
+customers$age_group <- cut(customers$age, breaks = age_bins, labels = age_labels, include.lowest = TRUE)
+```
+
+```{r}
+library(ggplot2)
+
+# Calculate age group percentages
+age_group_percentage <- round(prop.table(table(customers$age_group)) * 100, 1)
+
+# Create the bar plot
+ggplot(data = NULL, aes(x = names(age_group_percentage), y = age_group_percentage)) +
+  geom_bar(stat = "identity", fill = "lightblue") +
+  labs(x = "Age", y = "Percentage %", title = "Age Distribution") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 12)) +
+  geom_text(aes(label = paste0(age_group_percentage, "%")), position = position_stack(vjust = 0.5), size = 4) +
+  scale_y_continuous(breaks = seq(0, 25, 5)) +
+  coord_flip()
+```
+
+#### Observations:
+
+-   The largest age group among customers is 56-65 years old, closely followed by the 46-55 years old group.
+
+-   The third largest age group consists of customers aged 66-75 years.
+
+-   Collectively, the top three age groups represent approximately 60% of the customer base.
+
+-   This distribution is logical as individuals between 46 and 75 years of age tend to have more available time to visit cafes compared to younger age groups.
+
+-   Additionally, they typically have better mobility than those above 75 years old, making them more likely to be cafe customers.
+
+### Univariate Analysis - `income`
+
+```{r}
+# Set up the layout with 1 row and 2 columns for the plots
+par(mfrow = c(1, 2), mar = c(5, 4, 4, 2))
+
+# Create a boxplot for income
+boxplot(customers$income, xlab = "Income", main = "Boxplot", col = "lightblue")
+
+# Create a histogram for income
+hist(customers$income, xlab = "Income", main = "Histogram", col = "lightblue")
+
+# Adjust label sizes
+par(cex.lab = 1.5)
+
+# Print descriptive statistics for income
+summary(customers$income)
+
+```
+
+#### Dividing customers into income groups
+
+```{r}
+# Create a new column `income_group`
+customers$income_group <- cut(customers$income,
+  breaks = c(min(customers$income), 45000, 60000, 75000, 90000, 105000, max(customers$income)),
+  labels = c('30-45k', '45-60k', '60-75k', '75-90k', '90-105k', '> 105k')
+)
+```
+
+```{r}
+# Calculate income group percentages
+income_group_percentage <- round(table(customers$income_group) / nrow(customers) * 100, 1)
+```
+
+```{r}
+# Create a barplot
+bp <- barplot(income_group_percentage, 
+              main = "Income Group Distribution",
+              xlab = "Income Group",
+              ylab = "Percentage",
+              col = "skyblue",
+              names.arg = levels(customers$income_group),
+              ylim = c(0, max(income_group_percentage) + 5)
+)
+
+# Add percentages within the bars
+text(x = bp, y = income_group_percentage + 2, labels = paste(income_group_percentage, "%"), pos = 3)
+
+# Add a legend
+legend("topright", legend = paste(levels(customers$income_group), " (", income_group_percentage, "%)"), fill = "skyblue", bty = "n")
+```
+
+#### Observations:
+
+-   Customer Income Range: The income of customers spans from 30k to 120k, with an average income of 65.4k.
+
+-   Dominant Income Groups: The top two income groups are those earning 60-75k and 45-60k annually, collectively representing around 50% of the customer base.
+
+-   Resemblance to Population: The income distribution among customers closely mirrors that of the general population. However, individuals with very low income might face challenges affording frequent visits to cafes, while those with extremely high income might opt for alternative coffee enjoyment methods.
+
+### Univariate Analysis - `became_member_on`
+
+```{r}
+library(dplyr)
+library(lubridate)
+
+# Create a new data frame df_member
+df_member <- customers %>%
+  select(id, became_member_on)
+
+# Add columns `year`, `month`, `day_of_week`
+df_member <- df_member %>%
+  mutate(
+    year = year(became_member_on),
+    month = month(became_member_on),
+    day = day(became_member_on),
+    month_name = month(became_member_on, label = TRUE),
+    day_of_week = wday(became_member_on, label = TRUE),
+    day_name = wday(became_member_on, label = TRUE, abbr = FALSE)
+  )
+
+head(df_member, 3)
+```
+
+```{r}
+# Load the ggplot2 library if not already loaded
+library(ggplot2)
+
+# Create a count plot with detailed customization and values
+ggplot(data = df_member, aes(x = year, fill = factor(year))) +
+  geom_bar(color = "black", width = 0.7, position = "dodge") +
+  geom_text(aes(label = after_stat(count)), stat = "count", vjust = -0.5, size = 4, color = "black") +
+  scale_fill_brewer(palette = "Set1") +  # Use a predefined color palette
+  labs(title = "Number of New Members by Year", x = "Year", y = "Count") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(size = 12, angle = 45, hjust = 1),
+        axis.text.y = element_text(size = 12),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14
+        )
+  )
+
+```
+
+#### Daily member growth:
+
+```{r}
+# Load the required libraries if not already loaded
+library(dplyr)
+library(tidyr)
+
+# Create a time series with the number of new members on each day
+df_member_growth <- df_member %>%
+  count(became_member_on) %>%
+  arrange(became_member_on) %>%
+  rename(`Number of New Members` = n)
+
+```
+
+```{r}
+# Assuming df_member_growth is already defined
+# Create four phases with different daily growth
+
+# Phase 1: '2013-july' to '2015-july'
+phase_1 <- df_member_growth %>%
+  filter(became_member_on >= as.Date('2013-07-01') & became_member_on <= as.Date('2015-07-31'))
+
+len_phase_1 <- nrow(phase_1)
+mean_phase_1 <- mean(phase_1$`Number of New Members`)
+
+# Phase 2: '2015-august' to '2017-july'
+phase_2 <- df_member_growth %>%
+  filter(became_member_on >= as.Date('2015-08-01') & became_member_on <= as.Date('2017-07-31'))
+
+len_phase_2 <- nrow(phase_2)
+mean_phase_2 <- mean(phase_2$`Number of New Members`)
+
+# Phase 3: '2017-august' to '2018-jan'
+phase_3 <- df_member_growth %>%
+  filter(became_member_on >= as.Date('2017-08-01') & became_member_on <= as.Date('2018-01-31'))
+
+len_phase_3 <- nrow(phase_3)
+mean_phase_3 <- mean(phase_3$`Number of New Members`)
+
+# Phase 4: '2018-feb' to '2018-july'
+phase_4 <- df_member_growth %>%
+  filter(became_member_on >= as.Date('2018-02-01') & became_member_on <= as.Date('2018-07-31'))
+
+len_phase_4 <- nrow(phase_4)
+mean_phase_4 <- mean(phase_4$`Number of New Members`)
+
+```
+
+```{r}
+# Load the ggplot2 library if not already loaded
+library(ggplot2)
+
+# Define the means and lengths for each phase
+mean_phases <- c(mean_phase_1, mean_phase_2, mean_phase_3, mean_phase_4)
+len_phases <- c(len_phase_1, len_phase_2, len_phase_3, len_phase_4)
+
+# Create a data frame with phase information
+phase_info <- data.frame(
+  phase = c("Phase 1", "Phase 2", "Phase 3", "Phase 4"),
+  start_date = as.Date(c('2013-07-01', '2015-08-01', '2017-08-01', '2018-02-01')),
+  end_date = as.Date(c('2015-07-31', '2017-07-31', '2018-01-31', '2018-07-31')),
+  mean = mean_phases
+)
+
+# Create the plot with phases and mean values
+ggplot(data = df_member_growth) +
+  geom_line(aes(x = became_member_on, y = `Number of New Members`)) +
+  geom_hline(data = phase_info, aes(yintercept = mean), linetype = "dashed", color = "red", size = 1) +
+  geom_vline(data = phase_info, aes(xintercept = start_date), linetype = "dotted", color = "blue", size = 1) +
+  geom_vline(data = phase_info, aes(xintercept = end_date), linetype = "dotted", color = "blue", size = 1) +
+  labs(
+    x = "Date",
+    y = "Number of New Members",
+    title = "Daily Member Growth",
+    subtitle = "Phase-wise",
+    caption = "Red dashed lines represent mean values for each phase"
+  ) +
+  scale_x_date(date_labels = "%Y-%b", date_breaks = "3 months") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 20, face = "bold"),
+    axis.title = element_text(size = 16),
+    axis.text.x = element_text(size = 14, angle = 45, hjust = 1),
+    axis.text.y = element_text(size = 14),
+    legend.position = "none"  # Hide the legend
+  )
+
+```
+
+#### Observations:
+
+-   The dataset includes customers who became members between July 2013 and July 2018.
+
+-   Only a small percentage of customers (approximately 2.2%) chose to become members from 2013 to the middle of 2015.
+
+-   The number of new members started to increase significantly from the middle of 2015 and experienced a substantial growth spike from the middle of 2017. This suggests that the company likely executed successful campaigns during these periods, resulting in a significant boost in member growth.
+
+-   However, in early 2018, there was a noticeable decline in daily member growth, with a 31% decrease (from 24.4 to 16.8). This drop may indicate that new strategies implemented during that time had a negative impact on member growth.
+
+#### Member growth by Month:
+
+```{r}
+# Load the ggplot2 library if not already loaded
+library(ggplot2)
+
+# Create a detailed and rainbow-colored count plot
+ggplot(data = df_member, aes(x = month_name)) +
+  geom_bar(fill = rainbow(length(unique(df_member$month_name)), s = 0.7, v = 0.8), color = "black", width = 0.7) +
+  labs(
+    title = "Number of New Members by Month",
+    x = "Count",
+    y = "Month"
+  ) +
+  scale_fill_identity() +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(size = 12, angle = 45, hjust = 1),
+    axis.text.y = element_text(size = 12),
+    axis.title.x = element_text(size = 14)
+  )
+
+```
+
+#### Member growth by weekday:
+
+```{r}
+# Load the ggplot2 library if not already loaded
+library(ggplot2)
+
+# Create a custom color palette
+my_colors <- c("#3498db", "#e74c3c", "#2ecc71", "#f1c40f", "#9b59b6", "#e67e22", "#1abc9c")
+
+# Create a detailed and appealing count plot by weekday
+ggplot(data = df_member, aes(x = factor(day_name, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))) ) +
+  geom_bar(fill = my_colors, color = "black", width = 0.7) +
+  labs(
+    title = "Number of New Members by Weekday",
+    x = "Count",
+    y = "Weekday"
+  ) +
+  scale_x_discrete(labels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(size = 12, angle = 45, hjust = 1),
+    axis.text.y = element_text(size = 12),
+    axis.title.x = element_text(size = 14)
+  )
+
+```
+
+#### Observations:
+
+-   August, October, and December experienced the highest influx of new members, with August leading the way.
+
+-   Conversely, February had the lowest average number of new members, indicating a drop in membership during this month.
+
+-   Weekends, unsurprisingly, had higher member growth compared to weekdays. Among weekdays, Tuesday showed the highest member growth.
+
+-   On average, Friday had the fewest new members, making it the day with the lowest member sign-ups.
+
+### Bivariate Analysis - `age` vs `gender`
+
+```{r}
+# Load the required libraries if not already loaded
+library(dplyr)
+library(ggplot2)
+
+# Data aggregation - mean age by gender
+customers_aggregated <- customers %>%
+  group_by(gender) %>%
+  summarize(mean_age = mean(age))
+
+# Print the mean age by gender
+print(customers_aggregated)
+
+# Create a KDE plot for age vs. gender
+ggplot(data = customers, aes(x = age, fill = gender)) +
+  geom_density(alpha = 0.5) +
+  labs(
+    title = "Age vs Gender",
+    x = "Age",
+    y = "Density"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 16)
+  )
+
+```
+
+```{r}
+# Load the necessary libraries if not already loaded
+library(ggplot2)
+
+# Calculate the mean age by gender
+mean_age_by_gender <- aggregate(age ~ gender, data = customers, FUN = mean)
+
+# Print the mean age by gender
+print(mean_age_by_gender)
+
+# Create a density plot with enhanced spreading on both axes
+ggplot(data = customers, aes(x = age, fill = gender)) +
+  geom_density(alpha = 0.6, adjust = 2) +
+  labs(
+    title = "Age vs Gender",
+    x = "Age",
+    y = "Density"
+  ) +
+  ylim(0, 0.04) +  # Adjust the y-axis limits
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12),
+    axis.title.x = element_text(size = 14)
+  )
+
+```
+
+### Bivariate Analysis - `income` vs `gender`
+
+```{r}
+# Load the necessary libraries if not already loaded
+library(ggplot2)
+library(scales)
+
+# Create a custom scaling factor for the y-axis labels
+scaling_factor <- 1e5  # Adjust this factor as needed
+
+# Create a density plot for income vs gender with increased spread on both axes
+ggplot(customers, aes(x = income, fill = gender)) +
+  geom_density(alpha = 0.5) +
+  labs(
+    title = "Income vs Gender",
+    x = "Income",
+    y = "Density"
+  ) +
+  scale_x_continuous(limits = c(0, 150000), breaks = seq(0, 150000, by = 20000)) +  # Adjust x-axis limits and breaks
+  scale_y_continuous(labels = scales::number_format(scale = scaling_factor), limits = c(0, 0.000020)) +  # Adjust y-axis limits
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12),
+    axis.title.x = element_text(size = 14)
+  )
+
+```
+
+#### Observations:
+
+-   The income distribution of female customers exhibits a nearly normal distribution, suggesting that female customers across the entire income range tend to enjoy the company's products.
+
+-   Male customers, on the other hand, have a right-skewed income distribution, indicating that a larger proportion of male customers falls within the lower half of the income spectrum among the company's customer base.
+
+-   Female customers have a significantly higher average income compared to customers of other genders. This disparity in income may be attributed to the assumption that female customers, on average, are older than customers in other gender groups. It will be examined whether this assumption holds true in the following analysis.
+
+-   On average, female customers have an income of \$71,000, while male customers have an average income of \$61,000. Customers of other genders have an average income of \$63,000.
+
+### Bivariate Analysis - `income` vs `age`
+
+```{r}
+head(customers)
+customers$income
+```
+
+```{r}
+customers$age_group
+```
+
+```{r}
+# Load required libraries
+library(ggplot2)
+library(dplyr)
+
+# Create a summary dataframe
+summary_data <- customers %>%
+  group_by(age_group) %>%
+  summarize(mean_income = mean(income))
+
+# Create the barplot
+ggplot(summary_data, aes(x = age_group, y = mean_income, fill = age_group)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Age Group", y = "Income") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for better readability
+
+```
+
+#### Observations: 
+
+-   Customers in the two younger age groups (18-35 years old) have an average annual income of approximately \$51,000 USD.
+
+-   The middle age groups (36-55 years old) exhibit an average annual income of about \$65,000 USD.
+
+-   All age groups above 56 years old display very similar average annual incomes, hovering around \$70,000 USD.
+
+-   On average, older customers of the company tend to have higher incomes.
+
+-   The company's customers across all age groups have substantially higher average incomes compared to the median income of US citizens in 2018, which stood at \$30,119 USD.
+
+-   The use of the 2018 median income as a benchmark is justified because the dataset contains records only up to July 2018, and customer profile data, including income, is typically not frequently updated. Hence, it's more relevant to compare customer income with the population's income in the year they last became members.
