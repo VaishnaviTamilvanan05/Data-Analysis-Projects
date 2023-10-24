@@ -765,3 +765,164 @@ ggplot(data = df_member, aes(x = factor(day_name, levels = c("Monday", "Tuesday"
 #### Answer to SMART question based on the above analysis:
 
 ***-\> The dataset includes customers who became members between July 2013 and July 2018. Daily member growth increased significantly from the middle of 2015, with a substantial spike in growth from the middle of 2017, suggesting successful campaigns during these periods. However, there was a noticeable decline in early 2018, indicating that new strategies implemented at that time may have had a negative impact on member growth. August, October, and December experienced the highest influx of new members, with weekends and Tuesdays showing higher member growth. The data indicates fluctuations in member growth over time.***
+
+
+```{r}
+df_offers
+head(df_cust_offer)
+```
+
+
+```{r}
+library(dplyr)
+
+# Create a dataframe that only contains events about offers
+df_event <- df_cust_offer %>% filter(event != "transaction")
+
+# Merge df_event with df_offers
+event_offer <- df_event %>% 
+  left_join(df_offers, by = c("value_data" = "id")) %>%
+  select(
+    customer_id, event, offer_alias, reward, channels, difficulty,
+    duration, offer_type, days_elapsed
+  )
+
+event_offer
+# Drop the 'dict_value' column, as 'offer_alias' provides the offer identifier
+#event_offer <- event_offer %>% select(-value_data)
+```
+
+```{r}
+# Filter the events for 'offer received' and 'offer completed'
+offer_received <- event_offer[event_offer$event == 'offer received', ]
+offer_completed <- event_offer[event_offer$event == 'offer completed', ]
+
+# Count the number of times each offer is received and completed
+p0 <- table(offer_received$offer_alias)
+p2 <- table(offer_completed$offer_alias)
+
+# Ensure both p0 and p2 have the same names
+combined_names <- intersect(names(p0), names(p2))
+p0 <- p0[combined_names]
+p2 <- p2[combined_names]
+
+# Calculate the overall completion rate
+overall_complete_rate <- p2 / p0
+
+# Sort the overall completion rate in descending order
+overall_complete_rate <- overall_complete_rate[order(overall_complete_rate, decreasing = TRUE)]
+
+print(overall_complete_rate)
+```
+
+
+```{r}
+# Create a data frame for visualization
+completion_data <- data.frame(
+  Offer = factor(names(overall_complete_rate), levels = names(overall_complete_rate)[order(overall_complete_rate, decreasing = TRUE)]),
+  CompletionRate = overall_complete_rate[order(overall_complete_rate, decreasing = TRUE)] # Sort the data by CompletionRate in descending order
+
+)
+
+library(ggplot2)
+
+# Create the bar plot
+ggplot(completion_data, aes(x = Offer, y = CompletionRate)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  theme_minimal() +
+  labs(
+    title = "Overall Completion Rate %",
+    x = "Offer",
+    y = "Percentage"
+  ) +
+  scale_y_continuous(labels = scales::percent_format(scale = 1)) +  # Format y-axis as percentage
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels
+
+```
+Note that Offers I and J are excluded from the plot because they are informational offers and, as a result, they do not have any 'offer completed' events associated with them.
+
+Observations:
+1. With remarkable completion rates of 70%, 67.4%, and 56.7%, respectively, are Offer F, Offer E, and Offer B. These incentives worked quite well to motivate clients to do the related duties.
+2. Offer D, on the other hand, had the lowest completion rate of approximately 44%. This implies that, in comparison to the best offers, this one could not have been as enticing or successful in drawing in clients.
+
+```{r}
+# Filter the event_offer data frame for 'offer received' events
+offer_received <- event_offer[event_offer$event == 'offer received', ]
+
+# Count the number of times each offer was received
+p0 <- table(offer_received$offer_alias)
+
+# Create a bar plot
+barplot(p0, names.arg = names(p0), col = 'orange', xlab = 'Offer', ylab = 'Count',
+        main = 'Offer Received', cex.main = 1.8, cex.lab = 1.5, cex.axis = 1.2)
+
+# Rotate x-axis labels for better readability
+#axis(1, labels = names(p0), las = 2)
+
+```
+Observation: 
+Each of the ten offers received a similar number of times, with approximately 7,600 receptions for each offer. The distribution of offer receptions was consistent, indicating that there was no significant discrepancy in how often different offers were received by customers.
+
+```{r}
+# Number of offers
+num_offers <- nrow(df_offers)
+
+# Create an empty data frame to store the counts
+each_offer_received <- data.frame(matrix(ncol = num_offers))
+colnames(each_offer_received) <- LETTERS[1:num_offers]
+
+# Loop through the offers and count how many times each offer was received on each day
+for (i in 1:num_offers) {
+  offer_alias <- LETTERS[i]
+  offer_received_counts <- table(df_event[df_event$offer_alias == offer_alias, "days_since_start"])
+  each_offer_received[, i] <- offer_received_counts
+}
+
+# Set row names explicitly
+row_names <- paste0('Day', unique(df_event$days_since_start))
+rownames(each_offer_received) <- row_names
+```
+
+
+```{r}
+# Subset the data for 'offer viewed' events
+offer_viewed <- event_offer[event_offer$event == "offer viewed", ]
+
+# Count the number of times each offer was viewed
+p1 <- table(offer_viewed$offer_alias)
+
+# Calculate the view rate for each offer
+p1_rate <- p1 / p0
+
+# Sort the view rates in descending order
+p1_rate <- p1_rate[order(p1_rate, decreasing = TRUE)]
+
+# Create a bar plot
+barplot(p1_rate, col = c('#011f4b', '#011f4b', '#011f4b', '#011f4b', '#03396c', '#03396c', '#005b96', '#005b96', '#005b96', '#b3cde0'),
+        names.arg = names(p1_rate), 
+        main = 'View Rate %',
+        xlab = 'Offer',
+        ylab = 'Percentage',
+        ylim = c(0, 1.2),
+        yaxt = 'n')
+axis(2, at = seq(0, 1.2, 0.2), labels = paste0(seq(0, 1, 0.2) * 100, '%'))
+
+# Show the plot
+
+```
+Observations: 
+The results are quite intriguing. When we look at the bar plot with 10 bars, each representing a different offer, we can see that these bars can be grouped into four distinct levels of height. These four levels correspond to four specific combinations of promotion channels. This alignment is also reflected in the colors used in the plot to represent each offer.
+
+Group-1:	(F D E B)	  email, mobile, social, web
+Group-2:	(J C)	      email, mobile, social
+Group-3:	(I A G)	    email, mobile, web
+Group-4:	(H)	        email, web
+
+Conclusions:
+The study draws attention to how different promotion channels differ in their efficacy:
+1. Web-based offers (Group 1) have a little greater view rate than Group 2, but their overall contribution is minimal when compared to Group 2.
+2. Group 2, which consists of advertisements on social media, is notable for having a much greater view rate. Offers from social media platforms significantly affect the view rate.
+3. Group 3, which features promotions for mobile apps, likewise does well and has a higher view rate.
+4. Group 4, which is dominated by email and has a little web component, lessens the impact of web-based offers. Email promotions have a significant and marginally better influence on view rates than mobile promotions, as evidenced by the fact that the majority of offers in Group 4 are viewed via email.
+
+To sum up, the offer view rate was influenced by all promotion channels, however their relative importance differed. In terms of relevance, social media was the most influential, followed by websites, email, smartphones, and so on.
