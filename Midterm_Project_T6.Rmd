@@ -814,42 +814,42 @@ overall_complete_rate <- overall_complete_rate[order(overall_complete_rate*100, 
 
 print(overall_complete_rate)
 ```
-
 ```{r}
-# Load necessary libraries
+# Install and load necessary packages
 library(ggplot2)
 
-# Create a custom color palette
-my_colors <- c("#004c00", "#006600", "#198c19", "#4ca64c", "#66b266", "#7fbf7f", "#b2d8b2","#e5f2e5")
+# Create a data frame for visualization
+completion_data <- data.frame(
+  Offer = names(overall_complete_rate),
+  CompletionRate <- overall_complete_rate
+)
 
-# Create the bar plot with customizations
-ggplot(completion_data, aes(x = Offer, y = CompletionRate*100, fill = Offer)) +
-  geom_bar(stat = "identity", width = 0.7) +
+completion_data <- completion_data %>% arrange(desc(CompletionRate))
+
+# Create the bar plot
+ggplot(completion_data, aes(x = Offer, y = CompletionRate)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
   theme_minimal() +
   labs(
     title = "Overall Completion Rate %",
     x = "Offer",
-    y = "Percentage"
+    y = "Percentage",
+    ylim(0, 1.2),
+    y.axis.text = c('0%', '20%', '40%', '60%', '80%', '100%')
   ) +
-  scale_fill_manual(values = my_colors) +  # Custom color palette
-  scale_y_continuous(labels = scales::percent_format(scale = 1),
-                     breaks = seq(0, 1, by = 0.1)) +  # Customize the breaks for the y-axis
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) +  # Rotate x-axis labels
-  theme(plot.title = element_text(size = 20, hjust = 0.5)) +  # Title font size
-  theme(legend.position = "none") +  # Remove legend
-  geom_text(aes(label = scales::percent(CompletionRate)), vjust = -0.5, size = 4)  # Add data labels
-
-# Save the plot as an image file (e.g., PNG)
-ggsave("creative_bar_plot.png", width = 10, height = 6, dpi = 300)
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)+
+            geom_text(aes(label = scales::percent(CompletionRate, scale = 100)), vjust = -0.5, size = 4)+
+          scale_y_continuous(labels = scales::percent_format(scale = 1), breaks = seq(0, 1, by = 0.2)) ) # Format y-axis as percentage
+  # Add data labels
+  # Rotate x-axis labels
 
 ```
-
-
 Note that Offers I and J are excluded from the plot because they are informational offers and, as a result, they do not have any 'offer completed' events associated with them.
 
 Observations:
 1. With remarkable completion rates of 70%, 67.4%, and 56.7%, respectively, are Offer F, Offer E, and Offer B. These incentives worked quite well to motivate clients to do the related duties.
 2. Offer D, on the other hand, had the lowest completion rate of approximately 44%. This implies that, in comparison to the best offers, this one could not have been as enticing or successful in drawing in clients.
+
 
 ```{r}
 # Filter the event_offer data frame for 'offer received' events
@@ -948,6 +948,8 @@ The study draws attention to how different promotion channels differ in their ef
 
 To sum up, the offer view rate was influenced by all promotion channels, however their relative importance differed. In terms of relevance, social media was the most influential, followed by websites, email, smartphones, and so on.
 
+
+
 ## EDA for Portfolio
 
 ```{r}
@@ -1017,7 +1019,7 @@ head(final)
 ```
 ```{r}
 # Counting the frequency of each offer type
-offer_counts <- table(final_merged_df$offer_type)
+offer_counts <- table(final$offer_type)
 
 ggplot(data = as.data.frame(offer_counts), aes(x = Var1, y = Freq)) +
   geom_bar(stat = "identity", fill = "skyblue", color = "black") +
@@ -1032,7 +1034,7 @@ From the above observation BOGO and the discount offer type has the maximum coun
 
 ```{r}
 # Summarize the data to get counts
-counts <- final_merged_df %>%
+counts <- final %>%
   group_by(offer_type, event) %>%
   summarize(count = n())
 colors <- c("#66c2a5", "#fc8d62", "#8da0cb")
