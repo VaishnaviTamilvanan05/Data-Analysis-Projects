@@ -926,3 +926,136 @@ The study draws attention to how different promotion channels differ in their ef
 4. Group 4, which is dominated by email and has a little web component, lessens the impact of web-based offers. Email promotions have a significant and marginally better influence on view rates than mobile promotions, as evidenced by the fact that the majority of offers in Group 4 are viewed via email.
 
 To sum up, the offer view rate was influenced by all promotion channels, however their relative importance differed. In terms of relevance, social media was the most influential, followed by websites, email, smartphones, and so on.
+
+## EDA for Portfolio
+
+```{r}
+#The count for each offer type.
+barplot(table(df_offers$offer_type), main='Count of Each Offer Type', col='skyblue', xlab='Offer Type', ylab='Count')
+
+```
+```{r}
+library(ggplot2)
+library(dplyr)
+
+# Count the occurrences of each channel
+channel_counts <- df_offers %>%
+  group_by(channels) %>%
+  summarise(count = n())
+
+ggplot(channel_counts, aes(x = channels, y = count)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(x = "Channels", y = "Count", title = "Promotional Channels") +
+  theme_minimal() 
+
+```
+OBSERVATIONS:
+Customers received offers via a combination of four different promotion channels: social media, email, mobile apps, and websites. The 10 offers use 4 different combinations of channels. Comparisons between offers using various channels can be used to determine the promotional impact of each channel. And from the above plot, it is clearly visible that combination of all the four channels leads.
+
+```{r}
+#Correlation between rewards, difficulty and duration
+correlation_matrix <- cor(df_offers[, c('reward', 'difficulty', 'duration')])
+heatmap(correlation_matrix, main='Correlation between rewards, difficulty and duration',cexRow = 1,cexCol = 1)
+
+```
+INTERPRETATION
+
+The above observations shows that the variables reward and difficulty , reward and duration had a positive correlation indicating that with increase in reward, duration and the difficulty will also increase.
+
+Difficulty and reward also seems to have a positive correlation indicating that increase in difficulty tends to increase the reward.
+
+```{r}
+#Offers based on difficulty and channels through which they are offered
+
+ggplot(df_offers, aes(x = as.factor(difficulty), fill = channels)) +
+  geom_bar(position = 'stack') +
+  labs(y = 'Number of Offers', x = 'Difficulty of Offers', 
+       title = 'Offers based on difficulty and channels through which they are offered') 
+```
+
+```{r}
+#Distribution of Number of Channels per Offer
+channels_count <- sapply(df_offers$channels, function(x) length(unlist(strsplit(x, ','))))
+barplot(table(channels_count), main='Distribution of Number of Channels per Offer', col='lightseagreen', xlab='Number of Channels', ylab='Count')
+
+```
+OBSERVATION:
+The above observation shows that the combination of 3 channels had the maximum count per offer.
+
+## MERGING ALL THE CSV FILES FOR BETTER RESULTS
+
+```{r}
+# df_offers and df_cust_offers
+merged_df <- merge(df_cust_offer, df_offers, by.x = "value_data", by.y = "id")
+head(merged_df)
+
+#customers and merged_df
+final <- merge(merged_df, customers, by.x = "customer_id", by.y = "id")
+head(final)
+
+```
+```{r}
+# Counting the frequency of each offer type
+offer_counts <- table(final_merged_df$offer_type)
+
+ggplot(data = as.data.frame(offer_counts), aes(x = Var1, y = Freq)) +
+  geom_bar(stat = "identity", fill = "skyblue", color = "black") +
+  labs(title = "Frequency of Each Offer Type",
+       x = "Offer Type",
+       y = "Count") 
+
+```
+OBSERVATION:
+
+From the above observation BOGO and the discount offer type has the maximum count of nearly 66,000 and 62,000 respectively while the informational offer had the least count.
+
+```{r}
+# Summarize the data to get counts
+counts <- final_merged_df %>%
+  group_by(offer_type, event) %>%
+  summarize(count = n())
+colors <- c("#66c2a5", "#fc8d62", "#8da0cb")
+# Create a stacked bar plot
+ggplot(counts, aes(x = offer_type, y = count, fill = event)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Event Counts for Each Offer Type",
+       x = "Offer Type",
+       y = "Count") +
+  scale_fill_manual(values = colors)  
+
+```
+INTERPRETATIONS:
+
+1) BOGO offer appears to be especially successful in views and decent with the completions, indicating a strong level of customer interest.
+
+2) On the other hand discount offer does attract better customers but slightly less than BOGO.
+
+3) However informational offers did not result in any completion of the offer and also had only a notable views and receiving which is much less compared to both BOGO and discount. 
+
+To conclude, based on the completions, discount offer had an upper hand as it attracted many customers.
+
+```{r}
+#Offer Type Preferences by Gende
+offer_counts <- table(final$gender, final$offer_type)
+offer_counts_df <- as.data.frame(offer_counts)
+colnames(offer_counts_df) <- c('gender', 'offer_type', 'count')  
+
+# Plot using ggplot2
+ggplot(offer_counts_df, aes(x = gender, y = count, fill = offer_type)) +
+  geom_bar(stat = 'identity', position = 'dodge') +
+  labs(title = 'Offer Type Preferences by Gender',
+       x = 'Gender',
+       y = 'Count') +
+  theme_minimal() 
+```
+
+
+OBSERVATIONS:
+This indicates the engagement patterns with different offer types such as BOGO, Discount, and Informational offers for different gender categories(Female,male, other)
+
+1)Men show more engagement than women and other gender categories in all the three offer types(BOGO, discount, informational).
+
+2)Women show a huge count of involvement, but are slightly behind men with no much difference.
+
+3) Other gender categories are nearly ignorable when compared to men and women.
+
