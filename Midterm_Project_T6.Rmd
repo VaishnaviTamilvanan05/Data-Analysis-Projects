@@ -128,15 +128,19 @@ print(df_cust_offer_dtypes)
 ```
 
 ```{r}
-#convert time in hours to number of days 
 library(dplyr)
+
+# Convert time in hours to number of days
 df_cust_offer <- df_cust_offer %>% 
-  mutate(time = time / 24)
+  mutate(
+    days_elapsed = time / 24,  # Add a new column for days
+    hours_elapsed = time      # Rename time to hours_elapsed
+  ) %>% 
+  select(-time)  # Remove the original time column if needed
 ```
 
 ```{r}
 #Rename columns 
-colnames(df_cust_offer)[colnames(df_cust_offer) == "time"] <- "days_elapsed"
 colnames(df_cust_offer)[colnames(df_cust_offer) == "person"] <- "customer_id"
 tail(df_cust_offer)
 ```
@@ -170,7 +174,7 @@ head(df_offers)
 
 ```{r}
 # Extract the 'customer_id' and 'event' columns
-df_cust_offer_subset <- df_cust_offer[, c("customer_id", "event","days_elapsed")]
+df_cust_offer_subset <- df_cust_offer[, c("customer_id", "event","days_elapsed","hours_elapsed")]
  
 # Split the 'value' column into 'value_key' and 'value_data'
 df_cust_offer_subset$value_key <- sapply(strsplit(df_cust_offer$value, "[:,]") , "[[", 1)
@@ -205,20 +209,35 @@ xkabledply(event_value_counts)
 ```
 
 ```{r}
+# EDA on event occurences
+# Load the required libraries
 library(ggplot2)
+library(plotly)
 
 # Create a data frame from the event counts
 event_counts_df <- data.frame(event = names(event_value_counts), count = as.numeric(event_value_counts))
 
-# Create a bar chart using ggplot
-ggplot(event_counts_df, aes(x = event, y = count)) +
-  geom_bar(stat = "identity", fill = "blue") +
-  labs(title = "Bar Chart of Event Counts", x = "Event", y = "Count") +
-  theme_minimal()+
-  scale_y_continuous(breaks = seq(0, max(event_counts_df$count), by = 20000))
+# Define a vector of colors for  four events
+event_colors <- c("Coral", "Cyan", "Magenta", "Turquoise")
 
+# Create a ggplot2 bar chart 
+p <- ggplot(event_counts_df, aes(x = event, y = count, fill = event)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = event_colors) +
+  labs(title = "Event Distribution", x = "Event", y = "Count") +
+  theme_minimal() +
+  scale_y_continuous(breaks = seq(0, max(event_counts_df$count), by = 20000)) +
+  coord_flip() +
+  theme(panel.border = element_rect(color = "black", fill = NA),
+        panel.grid = element_blank(),
+        axis.text.x = element_text(face = "bold", color = "black"),
+        axis.text.y = element_text(face = "bold", color = "black")) 
 
+# Make the ggplot2 chart interactive using plotly
+interactive_plot <- ggplotly(p)
 
+# Display the interactive plot
+interactive_plot
 ```
 
 Observations:
@@ -243,7 +262,6 @@ Observations:
     participate in Starbucks' promotions.
 
 ```{r}
-
 #Print min and max of days elapsed
 min_days_elapsed <- min(df_cust_offer$days_elapsed)
 max_days_elapsed <- max(df_cust_offer$days_elapsed)
@@ -251,22 +269,106 @@ max_days_elapsed <- max(df_cust_offer$days_elapsed)
 cat("Minimum days_elapsed:", min_days_elapsed, "\n")
 cat("Maximum days_elapsed:", max_days_elapsed, "\n")
 
+
+#Print min and max of hours elapsed
+min_hours_elapsed <- min(df_cust_offer$hours_elapsed)
+max_hours_elapsed <- max(df_cust_offer$hours_elapsed)
+
+cat("Minimum hours_elapsed:", min_hours_elapsed, "\n")
+cat("Maximum hourss_elapsed:", max_hours_elapsed, "\n")
+
 ```
 
 ```{r}
+# Events occurence over time histogram
 library(ggplot2)
-# Create a histogram
-ggplot(df_cust_offer, aes(x = days_elapsed)) +
-  geom_histogram(bins = 30, fill = "brown", color = "black") +
-  labs(x = "Days", y = "Events Count", title = "Events Occurrence over Time") +
+library(plotly)
+
+# Create the histogram
+hist_plot <- ggplot(df_cust_offer, aes(x = days_elapsed)) +
+  geom_histogram(
+    bins = 30,
+    fill = "blue",
+    color = "lightblue",
+    alpha = 0.7,
+    linewidth = 0.5
+  ) +
+  labs(
+    x = "Days",
+    y = "Events Count",
+    title = "Events Occurrence over Time"
+  ) +
   theme_minimal() +
-  theme(axis.text = element_text(size = 14), axis.title = element_text(size = 14), plot.title = element_text(size = 16))
+  theme(
+    axis.text = element_text(size = 14),
+    axis.title = element_text(size = 14),
+    plot.title = element_text(size = 16),
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank()
+  )
+
+# Create an interactive plot
+interactive_plot <- ggplotly(hist_plot, tooltip = "count") %>%
+  highlight_key(~count)
+
+# Display the interactive plot
+interactive_plot
 
 ```
 
 The above plot reveals six distinct peaks of events during the campaign,
 primarily associated with the reception of offers, followed by
 subsequent events like offer views, completions, and purchases.
+
+##*Event Occurrences Across Time - A Detailed Analysis*
+```{r}
+# Libraries
+library(dplyr)
+
+# Subset the data for each event type and count occurrences per hour
+viewed_hourly <- df_cust_offer %>%
+  filter(event == 'offer viewed') %>%
+  group_by(hours_elapsed) %>%
+  summarize(count = n()) %>%
+  arrange(hours_elapsed)
+
+completed_hourly <- df_cust_offer %>%
+  filter(event == 'offer completed') %>%
+  group_by(hours_elapsed) %>%
+  summarize(count = n()) %>%
+  arrange(hours_elapsed)
+
+transaction_hourly <- df_cust_offer %>%
+  filter(event == 'transaction') %>%
+  group_by(hours_elapsed) %>%
+  summarize(count = n()) %>%
+  arrange(hours_elapsed)
+
+# Print the number of events for each type
+cat("Number of 'offer viewed' events:", nrow(viewed_hourly), "\n")
+cat("Number of 'offer completed' events:", nrow(completed_hourly), "\n")
+cat("Number of 'transaction' events:", nrow(transaction_hourly), "\n")
+
+```
+```{r}
+
+# Compare index values between viewed_hourly and completed_hourly
+matches_viewed_completed <- sum(viewed_hourly$hours_elapsed %in% completed_hourly$hours_elapsed)
+
+# Compare index values between completed_hourly and transaction_hourly
+matches_completed_transaction <- sum(completed_hourly$hours_elapsed %in% transaction_hourly$hours_elapsed)
+
+# Print the results
+cat("Number of matches between 'viewed_hourly' and 'completed_hourly':", matches_viewed_completed, "\n")
+cat("Number of matches between 'completed_hourly' and 'transaction_hourly':", matches_completed_transaction, "\n")
+
+
+```
+The indices of all three Series are the same, signifying the hours elapsed since the campaign began. Now we can conveniently create plots to illustrate how events are distributed over time. 
+
+
+
 
 ### **EDA on Customer Data:**
 
@@ -876,7 +978,8 @@ event_offer <- df_event %>%
     duration, offer_type, days_elapsed
   )
 
-event_offer
+head(event_offer)
+
 # Drop the 'dict_value' column, as 'offer_alias' provides the offer identifier
 #event_offer <- event_offer %>% select(-value_data)
 ```
