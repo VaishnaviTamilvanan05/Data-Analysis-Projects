@@ -128,15 +128,19 @@ print(df_cust_offer_dtypes)
 ```
 
 ```{r}
-#convert time in hours to number of days 
 library(dplyr)
+
+# Convert time in hours to number of days
 df_cust_offer <- df_cust_offer %>% 
-  mutate(time = time / 24)
+  mutate(
+    days_elapsed = time / 24,  # Add a new column for days
+    hours_elapsed = time      # Rename time to hours_elapsed
+  ) %>% 
+  select(-time)  # Remove the original time column if needed
 ```
 
 ```{r}
 #Rename columns 
-colnames(df_cust_offer)[colnames(df_cust_offer) == "time"] <- "days_elapsed"
 colnames(df_cust_offer)[colnames(df_cust_offer) == "person"] <- "customer_id"
 tail(df_cust_offer)
 ```
