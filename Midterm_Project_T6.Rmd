@@ -807,38 +807,44 @@ p0 <- p0[combined_names]
 p2 <- p2[combined_names]
 
 # Calculate the overall completion rate
-overall_complete_rate <- p2 / p0
+overall_complete_rate <- (p2 / p0)*100
 
 # Sort the overall completion rate in descending order
-overall_complete_rate <- overall_complete_rate[order(overall_complete_rate, decreasing = TRUE)]
+overall_complete_rate <- overall_complete_rate[order(overall_complete_rate*100, decreasing = TRUE)]
 
 print(overall_complete_rate)
 ```
 
-
 ```{r}
-# Create a data frame for visualization
-completion_data <- data.frame(
-  Offer = factor(names(overall_complete_rate), levels = names(overall_complete_rate)[order(overall_complete_rate, decreasing = TRUE)]),
-  CompletionRate = overall_complete_rate[order(overall_complete_rate, decreasing = TRUE)] # Sort the data by CompletionRate in descending order
-
-)
-
+# Load necessary libraries
 library(ggplot2)
 
-# Create the bar plot
-ggplot(completion_data, aes(x = Offer, y = CompletionRate)) +
-  geom_bar(stat = "identity", fill = "skyblue") +
+# Create a custom color palette
+my_colors <- c("#004c00", "#006600", "#198c19", "#4ca64c", "#66b266", "#7fbf7f", "#b2d8b2","#e5f2e5")
+
+# Create the bar plot with customizations
+ggplot(completion_data, aes(x = Offer, y = CompletionRate*100, fill = Offer)) +
+  geom_bar(stat = "identity", width = 0.7) +
   theme_minimal() +
   labs(
     title = "Overall Completion Rate %",
     x = "Offer",
     y = "Percentage"
   ) +
-  scale_y_continuous(labels = scales::percent_format(scale = 1)) +  # Format y-axis as percentage
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels
+  scale_fill_manual(values = my_colors) +  # Custom color palette
+  scale_y_continuous(labels = scales::percent_format(scale = 1),
+                     breaks = seq(0, 1, by = 0.1)) +  # Customize the breaks for the y-axis
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) +  # Rotate x-axis labels
+  theme(plot.title = element_text(size = 20, hjust = 0.5)) +  # Title font size
+  theme(legend.position = "none") +  # Remove legend
+  geom_text(aes(label = scales::percent(CompletionRate)), vjust = -0.5, size = 4)  # Add data labels
+
+# Save the plot as an image file (e.g., PNG)
+ggsave("creative_bar_plot.png", width = 10, height = 6, dpi = 300)
 
 ```
+
+
 Note that Offers I and J are excluded from the plot because they are informational offers and, as a result, they do not have any 'offer completed' events associated with them.
 
 Observations:
@@ -851,13 +857,28 @@ offer_received <- event_offer[event_offer$event == 'offer received', ]
 
 # Count the number of times each offer was received
 p0 <- table(offer_received$offer_alias)
+```
 
-# Create a bar plot
-barplot(p0, names.arg = names(p0), col = 'orange', xlab = 'Offer', ylab = 'Count',
-        main = 'Offer Received', cex.main = 1.8, cex.lab = 1.5, cex.axis = 1.2)
+```{r}
+# Create a data frame for visualization
+offer_received_data <- data.frame(
+  Offer = names(p0),
+  Count = as.numeric(p0)
+)
 
-# Rotate x-axis labels for better readability
-#axis(1, labels = names(p0), las = 2)
+bar_color <- "#D68060"
+
+# Create the bar plot 
+barplot(p0, 
+        names.arg = names(p0), 
+        col = bar_color, 
+        border = "black",  # Add a black border
+        xlab = 'Offers', 
+        ylab = 'Count of Offers',
+        main = 'Offer Received',
+        cex.main = 1.8, 
+        cex.lab = 1.5, 
+        cex.axis = 1.2)
 
 ```
 Observation: 
@@ -900,12 +921,12 @@ p1_rate <- p1_rate[order(p1_rate, decreasing = TRUE)]
 # Create a bar plot
 barplot(p1_rate, col = c('#011f4b', '#011f4b', '#011f4b', '#011f4b', '#03396c', '#03396c', '#005b96', '#005b96', '#005b96', '#b3cde0'),
         names.arg = names(p1_rate), 
-        main = 'View Rate %',
-        xlab = 'Offer',
+        main = 'View Rate Percentage',
+        xlab = 'Offers',
         ylab = 'Percentage',
         ylim = c(0, 1.2),
         yaxt = 'n')
-axis(2, at = seq(0, 1.2, 0.2), labels = paste0(seq(0, 1, 0.2) * 100, '%'))
+axis(2, at = seq(0, 1.2, 0.2), labels = paste0(seq(0, 1.2, 0.2) * 100, '%'))
 
 # Show the plot
 
