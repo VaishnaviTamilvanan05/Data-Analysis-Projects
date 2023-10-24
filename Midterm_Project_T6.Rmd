@@ -978,7 +978,8 @@ event_offer <- df_event %>%
     duration, offer_type, days_elapsed
   )
 
-event_offer
+head(event_offer)
+
 # Drop the 'dict_value' column, as 'offer_alias' provides the offer identifier
 #event_offer <- event_offer %>% select(-value_data)
 ```
