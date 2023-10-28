@@ -1163,13 +1163,6 @@ social media was the most influential, followed by websites, email,
 smartphones, and so on.
 
 ## EDA for Portfolio
-
-```{r}
-#The count for each offer type.
-barplot(table(df_offers$offer_type), main='Count of Each Offer Type', col='skyblue', xlab='Offer Type', ylab='Count')
-
-```
-
 ```{r}
 library(ggplot2)
 library(dplyr)
@@ -1180,9 +1173,10 @@ channel_counts <- df_offers %>%
   summarise(count = n())
 
 ggplot(channel_counts, aes(x = channels, y = count)) +
-  geom_bar(stat = "identity", fill = "skyblue") +
+  geom_bar(stat = "identity", fill = "#618264", color = "black", size = 0.2) +
   labs(x = "Channels", y = "Count", title = "Promotional Channels") +
   theme_minimal() 
+
 
 ```
 
@@ -1213,16 +1207,23 @@ indicating that increase in difficulty tends to increase the reward.
 ```{r}
 #Offers based on difficulty and channels through which they are offered
 
+custom_colors <- c("#BF8B67", "#632626", "#9D5353", "#D0B8A8")
+
 ggplot(df_offers, aes(x = as.factor(difficulty), fill = channels)) +
-  geom_bar(position = 'stack') +
+  geom_bar(position = 'stack', color = 'black', size = 0.5) +
+  scale_fill_manual(values = custom_colors) +  # Use custom colors
   labs(y = 'Number of Offers', x = 'Difficulty of Offers', 
-       title = 'Offers based on difficulty and channels through which they are offered') 
+       title = 'Offers based on difficulty and channels through which they are offered') +
+  theme_minimal() +  
+  theme(legend.position = "bottom")
+
 ```
 
 ```{r}
 #Distribution of Number of Channels per Offer
 channels_count <- sapply(df_offers$channels, function(x) length(unlist(strsplit(x, ','))))
-barplot(table(channels_count), main='Distribution of Number of Channels per Offer', col='lightseagreen', xlab='Number of Channels', ylab='Count')
+barplot(table(channels_count), main='Distribution of Number of Channels per Offer', col='#EF9595', xlab='Number of Channels', ylab='Count')
+
 
 ```
 
@@ -1234,23 +1235,42 @@ channels had the maximum count per offer.
 ```{r}
 # df_offers and df_cust_offers
 merged_df <- merge(df_cust_offer, customers, by.x = "customer_id", by.y = "id")
-merged_df
-df_cust_offer
+head(merged_df)
 #customers and merged_df
 final <- merge(merged_df,df_offers , by.x = "value_data", by.y = "id")
-final
-customers
+head(final)
+```
+**Categorical and Numerical variables of final df:**
+
+```{r}
+#checking numerical cols of final df
+numerical_cols <- sapply(final, is.numeric)
+numerical_colnames <- names(final)[numerical_cols]
+
+categorical_colnames <- names(final)[!numerical_cols]
+
+max_length <- max(length(numerical_colnames), length(categorical_colnames))
+
+numerical_colnames <- c(numerical_colnames, rep(NA, max_length - length(numerical_colnames)))
+categorical_colnames <- c(categorical_colnames, rep(NA, max_length - length(categorical_colnames)))
+var_df <- data.frame(Numeric = numerical_colnames, Categorical = categorical_colnames)
+
+print(var_df)
 ```
 
 ```{r}
-# Counting the frequency of each offer type
+colors <- c("#ad6a6c", "#d0ada7", "#e8d6cb")
+
+# Count the frequency of each offer type
 offer_counts <- table(final$offer_type)
 
 ggplot(data = as.data.frame(offer_counts), aes(x = Var1, y = Freq)) +
-  geom_bar(stat = "identity", fill = "skyblue", color = "black") +
+  geom_bar(stat = "identity", fill = colors, color = "black") +
   labs(title = "Frequency of Each Offer Type",
        x = "Offer Type",
-       y = "Count") 
+       y = "Count") +
+  scale_fill_manual(values = colors)
+ 
 
 ```
 
@@ -1265,7 +1285,7 @@ informational offer had the least count.
 counts <- final %>%
   group_by(offer_type, event) %>%
   summarize(count = n())
-colors <- c("#66c2a5", "#fc8d62", "#8da0cb")
+colors <- c("#34BE82", "#FF7F3F", "#1746A2")
 # Create a stacked bar plot
 ggplot(counts, aes(x = offer_type, y = count, fill = event)) +
   geom_bar(stat = "identity", position = "dodge") +
@@ -1273,6 +1293,7 @@ ggplot(counts, aes(x = offer_type, y = count, fill = event)) +
        x = "Offer Type",
        y = "Count") +
   scale_fill_manual(values = colors)  
+
 
 ```
 
@@ -1298,15 +1319,16 @@ age_offer_counts <- final %>%
   group_by(age_group, offer_type) %>%
   summarize(count = n()) 
 
-
-# Plotting the offer type preferences by age group
+colors <- c("#ad6a6c", "#d0ada7", "#e8d6cb")
 ggplot(age_offer_counts, aes(x = age_group, y = count, fill = offer_type)) +
   geom_bar(stat = 'identity', position = 'dodge') +
   labs(title = 'Offer Type Preferences by Age Group',
        x = 'Age Group',
        y = 'Count') +
   theme_minimal() +
-    theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust = 1)) 
+    theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust = 1)) +
+    scale_fill_manual(values = colors)  
+
 
 ```
 
@@ -1322,6 +1344,7 @@ groups.
 offer_counts <- table(final$gender, final$offer_type)
 offer_counts_df <- as.data.frame(offer_counts)
 colnames(offer_counts_df) <- c('gender', 'offer_type', 'count')  
+colors <- c("#ad6a6c", "#d0ada7", "#e8d6cb")
 
 # Plot using ggplot2
 ggplot(offer_counts_df, aes(x = gender, y = count, fill = offer_type)) +
@@ -1329,7 +1352,7 @@ ggplot(offer_counts_df, aes(x = gender, y = count, fill = offer_type)) +
   labs(title = 'Offer Type Preferences by Gender',
        x = 'Gender',
        y = 'Count') +
-  theme_minimal() 
+  theme_minimal() +scale_fill_manual(values = colors)
 ```
 
 OBSERVATIONS: This indicates the engagement patterns with different
@@ -1344,11 +1367,50 @@ with no much difference.
 
 3)  Other gender categories are nearly ignorable when compared to men
     and women.
+    
+```{r}
+# Filter data for each gender
+final_male <- final %>% filter(gender == "M")
+final_female <- final %>% filter(gender == "F")
+final_other <- final %>% filter(gender == "O")
+colors <- c("#34BE82", "#FF7F3F", "#1746A2")
+
+
+#MALe
+ggplot(final_male, aes(x = age_group, fill = event)) +
+  geom_bar(position = 'dodge') +
+  labs(title = 'Offer event type by Age Group - Male',
+       x = 'Age Group',
+       y = 'Count',
+       fill = 'Event Type') +
+  theme_minimal() +  scale_fill_manual(values = colors)+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
+#FEMALE
+ggplot(final_female, aes(x = age_group, fill = event)) +
+  geom_bar(position = 'dodge') +
+  labs(title = 'Offer event type by Age Group - Female',
+       x = 'Age Group',
+       y = 'Count',
+       fill = 'Event Type') +
+  theme_minimal() +scale_fill_manual(values = colors)+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
+#OTHERS
+ggplot(final_other, aes(x = age_group, fill = event)) +
+  geom_bar(position = 'dodge') +
+  labs(title = 'Offer event type by Age Group - Other',
+       x = 'Age Group',
+       y = 'Count',
+       fill = 'Event Type') +
+  theme_minimal() +scale_fill_manual(values = colors)+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
 
 ## HYPOTHESIS TESTING(CHI SQUARE)
 
 ```{r}
-contingency_table <- table(final$gender, final$income_group)
+contingency_table <- table(final$gender, final$age_group)
 
 # Perform the chi-squared test
 chi_squared_result <- chisq.test(contingency_table)
@@ -1358,12 +1420,12 @@ print(chi_squared_result)
 ```
 
 **Null Hypothesis (H0):** There is no association or relationship
-between the two categorical variables, "gender" and "income_group." In
+between the two categorical variables, "gender" and "age_group" In
 other words, they are independent of each other.
 
 **Alternative Hypothesis (H1):** There is an association or relationship
-between the two categorical variables, "gender" and "income_group." They
-are not independent of each other.
+between the two categorical variables, "gender" and "age_group" They
+are not independent of each other.
 
 **P-Value:** The p-value associated with the test statistic is less than
 2.2e-16, which is essentially zero.
@@ -1371,43 +1433,9 @@ are not independent of each other.
 Given the extremely low p-value (essentially zero), we can conclude that
 there is a significant association or relationship between the two
 categorical variables tested in the chi-squared test (likely "gender"
-and "income_group"). In other words, we reject the null hypothesis (H0)
+and "age_group"). In other words, we reject the null hypothesis (H0)
 that there is no association between these variables. Therefore, there
-is strong evidence to suggest that "gender" and "income_group" are not
+is strong evidence to suggest that "gender" and "age_group" are not
 independent of each other, and there is a significant
-relationship between them.
-
-```{r}
-#checking numerical cols of final df
-numerical_cols <- sapply(customers, is.numeric)
-numerical_colnames <- names(customers)[numerical_cols]
-
-categorical_colnames <- names(customers)[!numerical_cols]
-
-max_length <- max(length(numerical_colnames), length(categorical_colnames))
-
-numerical_colnames <- c(numerical_colnames, rep(NA, max_length - length(numerical_colnames)))
-categorical_colnames <- c(categorical_colnames, rep(NA, max_length - length(categorical_colnames)))
-var_df <- data.frame(Numeric = numerical_colnames, Categorical = categorical_colnames)
-
-print(var_df)
-```
-
-**Categorical and Numerical variables of final df:**
-
-```{r}
-#checking numerical cols of final df
-numerical_cols <- sapply(final, is.numeric)
-numerical_colnames <- names(final)[numerical_cols]
-
-categorical_colnames <- names(final)[!numerical_cols]
-
-max_length <- max(length(numerical_colnames), length(categorical_colnames))
-
-numerical_colnames <- c(numerical_colnames, rep(NA, max_length - length(numerical_colnames)))
-categorical_colnames <- c(categorical_colnames, rep(NA, max_length - length(categorical_colnames)))
-var_df <- data.frame(Numeric = numerical_colnames, Categorical = categorical_colnames)
-
-print(var_df)
-```
+relationship between them.
 
