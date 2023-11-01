@@ -439,6 +439,37 @@ transaction_hourly <- df_cust_offer %>%
 
 
 ```
+
+```{r}
+# Load the required libraries
+library(dplyr)
+
+# Filter and count events for each day
+received_daily <- df_cust_offer %>%
+  filter(event == 'offer received') %>%
+  group_by(days_elapsed) %>%
+  summarize(count = n()) %>%
+  arrange(days_elapsed)
+
+viewed_daily <- df_cust_offer %>%
+  filter(event == 'offer viewed') %>%
+  group_by(days_elapsed) %>%
+  summarize(count = n()) %>%
+  arrange(days_elapsed)
+
+completed_daily <- df_cust_offer %>%
+  filter(event == 'offer completed') %>%
+  group_by(days_elapsed) %>%
+  summarize(count = n()) %>%
+  arrange(days_elapsed)
+
+transaction_daily <- df_cust_offer %>%
+  filter(event == 'transaction') %>%
+  group_by(days_elapsed) %>%
+  summarize(count = n()) %>%
+  arrange(days_elapsed)
+
+```
 ```{r}
 
 library(ggplot2)
