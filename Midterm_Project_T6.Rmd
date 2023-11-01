@@ -12,7 +12,6 @@ output:
     toc: yes
     toc_depth: '3'
 ---
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -110,6 +109,9 @@ head(cust_numcols)
 #Converting became_member_on to datetime format
 df_customer_no_na$became_member_on <- as.Date(as.character(df_customer_no_na$became_member_on), format = "%Y%m%d")
 head(df_customer_no_na)
+
+# Save checkpoint after data cleaning
+customers <- data.frame(df_customer_no_na)
 ```
 
 ```{r}
@@ -125,15 +127,19 @@ print(df_cust_offer_dtypes)
 ```
 
 ```{r}
-#convert time in hours to number of days 
 library(dplyr)
+
+# Convert time in hours to number of days
 df_cust_offer <- df_cust_offer %>% 
-  mutate(time = time / 24)
+  mutate(
+    days_elapsed = time / 24,  # Add a new column for days
+    hours_elapsed = time      # Rename time to hours_elapsed
+  ) %>% 
+  select(-time)  # Remove the original time column if needed
 ```
 
 ```{r}
 #Rename columns 
-colnames(df_cust_offer)[colnames(df_cust_offer) == "time"] <- "days_elapsed"
 colnames(df_cust_offer)[colnames(df_cust_offer) == "person"] <- "customer_id"
 tail(df_cust_offer)
 ```
@@ -143,11 +149,6 @@ tail(df_cust_offer)
 ### **Transform `df_offers`**
 
 Add an alias to each offer for easier recognition and referencing.
-
-```{r}
-#before transforming
-head(df_offers)
-```
 
 ```{r}
 # Load required library
@@ -167,7 +168,7 @@ head(df_offers)
 
 ```{r}
 # Extract the 'customer_id' and 'event' columns
-df_cust_offer_subset <- df_cust_offer[, c("customer_id", "event","days_elapsed")]
+df_cust_offer_subset <- df_cust_offer[, c("customer_id", "event","days_elapsed","hours_elapsed")]
  
 # Split the 'value' column into 'value_key' and 'value_data'
 df_cust_offer_subset$value_key <- sapply(strsplit(df_cust_offer$value, "[:,]") , "[[", 1)
@@ -188,6 +189,59 @@ head(df_cust_offer_subset)
 df_cust_offer<- df_cust_offer_subset
 head(df_cust_offer)
 ```
+```{r}
+df_offers
+df_cust_offer
+customers
+```
+
+#### Dividing customers into age groups:
+
+```{r}
+# Define the age bins and labels
+age_bins <- c(customers$age %>% min(), 26, 36, 46, 56, 66, 76, 86, customers$age %>% max())
+age_labels <- c('18-25ys', '26-35ys', '36-45ys', '46-55ys', '56-65ys', '66-75ys', '76-85ys', '> 86ys')
+
+# Create the age_group column
+customers$age_group <- cut(customers$age, breaks = age_bins, labels = age_labels, include.lowest = TRUE)
+```
+
+## MERGING ALL THE CSV FILES FOR BETTER RESULTS
+
+Merging the datasets based on common columns like customer_id,id and value_data
+```{r}
+# Merge df_offers and df_cust_offer on the common column 'id'
+merged_df <- left_join(customers, df_cust_offer,by = c('id' = 'customer_id'))
+merged_df
+final_merged_df <- full_join(merged_df, df_offers, by = c('value_data' = 'id'))
+final_merged_df
+print(head(final_merged_df))
+
+```
+```{r}
+na_counts <- colSums(is.na(final_merged_df))
+print(na_counts)
+final<-na.omit(final_merged_df)
+final
+```
+
+**Categorical and Numerical variables of final df:**
+
+```{r}
+#checking numerical cols of final df
+numerical_cols <- sapply(final, is.numeric)
+numerical_colnames <- names(final)[numerical_cols]
+
+categorical_colnames <- names(final)[!numerical_cols]
+
+max_length <- max(length(numerical_colnames), length(categorical_colnames))
+
+numerical_colnames <- c(numerical_colnames, rep(NA, max_length - length(numerical_colnames)))
+categorical_colnames <- c(categorical_colnames, rep(NA, max_length - length(categorical_colnames)))
+var_df <- data.frame(Numeric = numerical_colnames, Categorical = categorical_colnames)
+
+print(var_df)
+```
 
 ## **EDA on transcripts data:**
 
@@ -202,20 +256,35 @@ xkabledply(event_value_counts)
 ```
 
 ```{r}
+# EDA on event occurences
+# Load the required libraries
 library(ggplot2)
+library(plotly)
 
 # Create a data frame from the event counts
 event_counts_df <- data.frame(event = names(event_value_counts), count = as.numeric(event_value_counts))
 
-# Create a bar chart using ggplot
-ggplot(event_counts_df, aes(x = event, y = count)) +
-  geom_bar(stat = "identity", fill = "blue") +
-  labs(title = "Bar Chart of Event Counts", x = "Event", y = "Count") +
-  theme_minimal()+
-  scale_y_continuous(breaks = seq(0, max(event_counts_df$count), by = 20000))
+# Define a vector of colors for  four events
+event_colors <- c("Coral", "Cyan", "Magenta", "Turquoise")
 
+# Create a ggplot2 bar chart 
+p <- ggplot(event_counts_df, aes(x = event, y = count, fill = event)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = event_colors) +
+  labs(title = "Event Distribution", x = "Event", y = "Count") +
+  theme_minimal() +
+  scale_y_continuous(breaks = seq(0, max(event_counts_df$count), by = 20000)) +
+  coord_flip() +
+  theme(panel.border = element_rect(color = "black", fill = NA),
+        panel.grid = element_blank(),
+        axis.text.x = element_text(face = "bold", color = "black"),
+        axis.text.y = element_text(face = "bold", color = "black")) 
 
+# Make the ggplot2 chart interactive using plotly
+interactive_plot <- ggplotly(p)
 
+# Display the interactive plot
+interactive_plot
 ```
 
 Observations:
@@ -227,7 +296,6 @@ Observations:
 3.  And 33,579 offers were completed, accounting for 58% of the viewed offers and 44% of all the offers sent. This relatively high offer completion rate is indicative of strong customer loyalty, likely indicating a substantial number of regular customers who regularly participate in Starbucks' promotions.
 
 ```{r}
-
 #Print min and max of days elapsed
 min_days_elapsed <- min(df_cust_offer$days_elapsed)
 max_days_elapsed <- max(df_cust_offer$days_elapsed)
@@ -235,28 +303,106 @@ max_days_elapsed <- max(df_cust_offer$days_elapsed)
 cat("Minimum days_elapsed:", min_days_elapsed, "\n")
 cat("Maximum days_elapsed:", max_days_elapsed, "\n")
 
+
+#Print min and max of hours elapsed
+min_hours_elapsed <- min(df_cust_offer$hours_elapsed)
+max_hours_elapsed <- max(df_cust_offer$hours_elapsed)
+
+cat("Minimum hours_elapsed:", min_hours_elapsed, "\n")
+cat("Maximum hourss_elapsed:", max_hours_elapsed, "\n")
+
 ```
 
 ```{r}
+# Events occurence over time histogram
 library(ggplot2)
-# Create a histogram
-ggplot(df_cust_offer, aes(x = days_elapsed)) +
-  geom_histogram(bins = 30, fill = "brown", color = "black") +
-  labs(x = "Days", y = "Events Count", title = "Events Occurrence over Time") +
+library(plotly)
+
+# Create the histogram
+hist_plot <- ggplot(df_cust_offer, aes(x = days_elapsed)) +
+  geom_histogram(
+    bins = 30,
+    fill = "blue",
+    color = "lightblue",
+    alpha = 0.7,
+    linewidth = 0.5
+  ) +
+  labs(
+    x = "Days",
+    y = "Events Count",
+    title = "Events Occurrence over Time"
+  ) +
   theme_minimal() +
-  theme(axis.text = element_text(size = 14), axis.title = element_text(size = 14), plot.title = element_text(size = 16))
+  theme(
+    axis.text = element_text(size = 14),
+    axis.title = element_text(size = 14),
+    plot.title = element_text(size = 16),
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank()
+  )
+
+# Create an interactive plot
+interactive_plot <- ggplotly(hist_plot, tooltip = "count") %>%
+  highlight_key(~count)
+
+# Display the interactive plot
+interactive_plot
 
 ```
 
 The above plot reveals six distinct peaks of events during the campaign, primarily associated with the reception of offers, followed by subsequent events like offer views, completions, and purchases.
 
-### **EDA on Customer Data:**
+\##*Event Occurrences Across Time - A Detailed Analysis*
 
 ```{r}
-head(df_customer_no_na)
-# Save checkpoint after data cleaning
-customers <- data.frame(df_customer_no_na)
+# Libraries
+library(dplyr)
+
+# Subset the data for each event type and count occurrences per hour
+viewed_hourly <- df_cust_offer %>%
+  filter(event == 'offer viewed') %>%
+  group_by(hours_elapsed) %>%
+  summarize(count = n()) %>%
+  arrange(hours_elapsed)
+
+completed_hourly <- df_cust_offer %>%
+  filter(event == 'offer completed') %>%
+  group_by(hours_elapsed) %>%
+  summarize(count = n()) %>%
+  arrange(hours_elapsed)
+
+transaction_hourly <- df_cust_offer %>%
+  filter(event == 'transaction') %>%
+  group_by(hours_elapsed) %>%
+  summarize(count = n()) %>%
+  arrange(hours_elapsed)
+
+# Print the number of events for each type
+cat("Number of 'offer viewed' events:", nrow(viewed_hourly), "\n")
+cat("Number of 'offer completed' events:", nrow(completed_hourly), "\n")
+cat("Number of 'transaction' events:", nrow(transaction_hourly), "\n")
+
 ```
+
+```{r}
+
+# Compare index values between viewed_hourly and completed_hourly
+matches_viewed_completed <- sum(viewed_hourly$hours_elapsed %in% completed_hourly$hours_elapsed)
+
+# Compare index values between completed_hourly and transaction_hourly
+matches_completed_transaction <- sum(completed_hourly$hours_elapsed %in% transaction_hourly$hours_elapsed)
+
+# Print the results
+cat("Number of matches between 'viewed_hourly' and 'completed_hourly':", matches_viewed_completed, "\n")
+cat("Number of matches between 'completed_hourly' and 'transaction_hourly':", matches_completed_transaction, "\n")
+
+
+```
+
+The indices of all three Series are the same, signifying the hours elapsed since the campaign began. Now we can conveniently create plots to illustrate how events are distributed over time.
+
+### **EDA on Customer Data:**
 
 ## *What is the profile of the customer base, including their gender distribution, age distribution, and income range, and how do these factors relate to each other?*
 
@@ -323,17 +469,6 @@ pie_chart
 ```
 
 **Observations:** The customer base consists of a larger proportion of males (57.2%) compared to females (41.3%), with a minor representation (1.4%) from customers identifying with other genders.
-
-#### Dividing customers into age groups:
-
-```{r}
-# Define the age bins and labels
-age_bins <- c(customers$age %>% min(), 26, 36, 46, 56, 66, 76, 86, customers$age %>% max())
-age_labels <- c('18-25ys', '26-35ys', '36-45ys', '46-55ys', '56-65ys', '66-75ys', '76-85ys', '> 86ys')
-
-# Create the age_group column
-customers$age_group <- cut(customers$age, breaks = age_bins, labels = age_labels, include.lowest = TRUE)
-```
 
 ```{r}
 library(ggplot2)
@@ -766,12 +901,10 @@ ggplot(data = df_member, aes(x = factor(day_name, levels = c("Monday", "Tuesday"
 
 ***-\> The dataset includes customers who became members between July 2013 and July 2018. Daily member growth increased significantly from the middle of 2015, with a substantial spike in growth from the middle of 2017, suggesting successful campaigns during these periods. However, there was a noticeable decline in early 2018, indicating that new strategies implemented at that time may have had a negative impact on member growth. August, October, and December experienced the highest influx of new members, with weekends and Tuesdays showing higher member growth. The data indicates fluctuations in member growth over time.***
 
-
 ```{r}
 df_offers
 head(df_cust_offer)
 ```
-
 
 ```{r}
 library(dplyr)
@@ -787,7 +920,8 @@ event_offer <- df_event %>%
     duration, offer_type, days_elapsed
   )
 
-event_offer
+head(event_offer)
+
 # Drop the 'dict_value' column, as 'offer_alias' provides the offer identifier
 #event_offer <- event_offer %>% select(-value_data)
 ```
@@ -814,6 +948,7 @@ overall_complete_rate <- overall_complete_rate[order(overall_complete_rate*100, 
 
 print(overall_complete_rate)
 ```
+
 ```{r}
 # Install and load necessary packages
 library(ggplot2)
@@ -844,12 +979,10 @@ ggplot(completion_data, aes(x = Offer, y = CompletionRate)) +
   # Rotate x-axis labels
 
 ```
+
 Note that Offers I and J are excluded from the plot because they are informational offers and, as a result, they do not have any 'offer completed' events associated with them.
 
-Observations:
-1. With remarkable completion rates of 70%, 67.4%, and 56.7%, respectively, are Offer F, Offer E, and Offer B. These incentives worked quite well to motivate clients to do the related duties.
-2. Offer D, on the other hand, had the lowest completion rate of approximately 44%. This implies that, in comparison to the best offers, this one could not have been as enticing or successful in drawing in clients.
-
+Observations: 1. With remarkable completion rates of 70%, 67.4%, and 56.7%, respectively, are Offer F, Offer E, and Offer B. These incentives worked quite well to motivate clients to do the related duties. 2. Offer D, on the other hand, had the lowest completion rate of approximately 44%. This implies that, in comparison to the best offers, this one could not have been as enticing or successful in drawing in clients.
 
 ```{r}
 # Filter the event_offer data frame for 'offer received' events
@@ -881,8 +1014,8 @@ barplot(p0,
         cex.axis = 1.2)
 
 ```
-Observation: 
-Each of the ten offers received a similar number of times, with approximately 7,600 receptions for each offer. The distribution of offer receptions was consistent, indicating that there was no significant discrepancy in how often different offers were received by customers.
+
+Observation: Each of the ten offers received a similar number of times, with approximately 7,600 receptions for each offer. The distribution of offer receptions was consistent, indicating that there was no significant discrepancy in how often different offers were received by customers.
 
 ```{r}
 # Number of offers
@@ -903,7 +1036,6 @@ for (i in 1:num_offers) {
 row_names <- paste0('Day', unique(df_event$days_since_start))
 rownames(each_offer_received) <- row_names
 ```
-
 
 ```{r}
 # Subset the data for 'offer viewed' events
@@ -931,32 +1063,17 @@ axis(2, at = seq(0, 1.2, 0.2), labels = paste0(seq(0, 1.2, 0.2) * 100, '%'))
 # Show the plot
 
 ```
-Observations: 
-The results are quite intriguing. When we look at the bar plot with 10 bars, each representing a different offer, we can see that these bars can be grouped into four distinct levels of height. These four levels correspond to four specific combinations of promotion channels. This alignment is also reflected in the colors used in the plot to represent each offer.
 
-Group-1:	(F D E B)	  email, mobile, social, web
-Group-2:	(J C)	      email, mobile, social
-Group-3:	(I A G)	    email, mobile, web
-Group-4:	(H)	        email, web
+Observations: The results are quite intriguing. When we look at the bar plot with 10 bars, each representing a different offer, we can see that these bars can be grouped into four distinct levels of height. These four levels correspond to four specific combinations of promotion channels. This alignment is also reflected in the colors used in the plot to represent each offer.
 
-Conclusions:
-The study draws attention to how different promotion channels differ in their efficacy:
-1. Web-based offers (Group 1) have a little greater view rate than Group 2, but their overall contribution is minimal when compared to Group 2.
-2. Group 2, which consists of advertisements on social media, is notable for having a much greater view rate. Offers from social media platforms significantly affect the view rate.
-3. Group 3, which features promotions for mobile apps, likewise does well and has a higher view rate.
-4. Group 4, which is dominated by email and has a little web component, lessens the impact of web-based offers. Email promotions have a significant and marginally better influence on view rates than mobile promotions, as evidenced by the fact that the majority of offers in Group 4 are viewed via email.
+Group-1: (F D E B) email, mobile, social, web Group-2: (J C) email, mobile, social Group-3: (I A G) email, mobile, web Group-4: (H) email, web
+
+Conclusions: The study draws attention to how different promotion channels differ in their efficacy: 1. Web-based offers (Group 1) have a little greater view rate than Group 2, but their overall contribution is minimal when compared to Group 2. 2. Group 2, which consists of advertisements on social media, is notable for having a much greater view rate. Offers from social media platforms significantly affect the view rate. 3. Group 3, which features promotions for mobile apps, likewise does well and has a higher view rate. 4. Group 4, which is dominated by email and has a little web component, lessens the impact of web-based offers. Email promotions have a significant and marginally better influence on view rates than mobile promotions, as evidenced by the fact that the majority of offers in Group 4 are viewed via email.
 
 To sum up, the offer view rate was influenced by all promotion channels, however their relative importance differed. In terms of relevance, social media was the most influential, followed by websites, email, smartphones, and so on.
 
-
-
 ## EDA for Portfolio
 
-```{r}
-#The count for each offer type.
-barplot(table(df_offers$offer_type), main='Count of Each Offer Type', col='skyblue', xlab='Offer Type', ylab='Count')
-
-```
 ```{r}
 library(ggplot2)
 library(dplyr)
@@ -967,13 +1084,14 @@ channel_counts <- df_offers %>%
   summarise(count = n())
 
 ggplot(channel_counts, aes(x = channels, y = count)) +
-  geom_bar(stat = "identity", fill = "skyblue") +
+  geom_bar(stat = "identity", fill = "#618264", color = "black", size = 0.2) +
   labs(x = "Channels", y = "Count", title = "Promotional Channels") +
   theme_minimal() 
 
+
 ```
-OBSERVATIONS:
-Customers received offers via a combination of four different promotion channels: social media, email, mobile apps, and websites. The 10 offers use 4 different combinations of channels. Comparisons between offers using various channels can be used to determine the promotional impact of each channel. And from the above plot, it is clearly visible that combination of all the four channels leads.
+
+OBSERVATIONS: Customers received offers via a combination of four different promotion channels: social media, email, mobile apps, and websites. The 10 offers use 4 different combinations of channels. Comparisons between offers using various channels can be used to determine the promotional impact of each channel. And from the above plot, it is clearly visible that combination of all the four channels leads.
 
 ```{r}
 #Correlation between rewards, difficulty and duration
@@ -981,6 +1099,7 @@ correlation_matrix <- cor(df_offers[, c('reward', 'difficulty', 'duration')])
 heatmap(correlation_matrix, main='Correlation between rewards, difficulty and duration',cexRow = 1,cexCol = 1)
 
 ```
+
 INTERPRETATION
 
 The above observations shows that the variables reward and difficulty , reward and duration had a positive correlation indicating that with increase in reward, duration and the difficulty will also increase.
@@ -990,44 +1109,41 @@ Difficulty and reward also seems to have a positive correlation indicating that 
 ```{r}
 #Offers based on difficulty and channels through which they are offered
 
+custom_colors <- c("#BF8B67", "#632626", "#9D5353", "#D0B8A8")
+
 ggplot(df_offers, aes(x = as.factor(difficulty), fill = channels)) +
-  geom_bar(position = 'stack') +
+  geom_bar(position = 'stack', color = 'black', size = 0.5) +
+  scale_fill_manual(values = custom_colors) +  # Use custom colors
   labs(y = 'Number of Offers', x = 'Difficulty of Offers', 
-       title = 'Offers based on difficulty and channels through which they are offered') 
+       title = 'Offers based on difficulty and channels through which they are offered') +
+  theme_minimal() +  
+  theme(legend.position = "bottom")
+
 ```
 
 ```{r}
-#Distribution of Number of Channels per Offer
-channels_count <- sapply(df_offers$channels, function(x) length(unlist(strsplit(x, ','))))
-barplot(table(channels_count), main='Distribution of Number of Channels per Offer', col='lightseagreen', xlab='Number of Channels', ylab='Count')
-
+colors <- c("#EFF6EE", "#273043", "#9197AE","darkgray")
+pie(channel_counts$count, labels = channel_counts$channels, main='Distribution of Number of Channels per Offer', col=colors)
+legend("bottomleft", legend=channel_counts$count, fill=colors, title="Occurance of Channels")
 ```
-OBSERVATION:
-The above observation shows that the combination of 3 channels had the maximum count per offer.
-
-## MERGING ALL THE CSV FILES FOR BETTER RESULTS
+OBSERVATION: The above observation shows that the combination of 3 channels had the maximum count per offer.
 
 ```{r}
-# df_offers and df_cust_offers
-merged_df <- merge(df_cust_offer, df_offers, by.x = "value_data", by.y = "id")
-head(merged_df)
+colors <- c("#ad6a6c", "#d0ada7", "#e8d6cb")
 
-#customers and merged_df
-final <- merge(merged_df, customers, by.x = "customer_id", by.y = "id")
-head(final)
-
-```
-```{r}
-# Counting the frequency of each offer type
+# Count the frequency of each offer type
 offer_counts <- table(final$offer_type)
 
 ggplot(data = as.data.frame(offer_counts), aes(x = Var1, y = Freq)) +
-  geom_bar(stat = "identity", fill = "skyblue", color = "black") +
+  geom_bar(stat = "identity", fill = colors, color = "black") +
   labs(title = "Frequency of Each Offer Type",
        x = "Offer Type",
-       y = "Count") 
+       y = "Count") +
+  scale_fill_manual(values = colors)
+ 
 
 ```
+
 OBSERVATION:
 
 From the above observation BOGO and the discount offer type has the maximum count of nearly 66,000 and 62,000 respectively while the informational offer had the least count.
@@ -1037,7 +1153,7 @@ From the above observation BOGO and the discount offer type has the maximum coun
 counts <- final %>%
   group_by(offer_type, event) %>%
   summarize(count = n())
-colors <- c("#66c2a5", "#fc8d62", "#8da0cb")
+colors <- c("#34BE82", "#FF7F3F", "#1746A2")
 # Create a stacked bar plot
 ggplot(counts, aes(x = offer_type, y = count, fill = event)) +
   geom_bar(stat = "identity", position = "dodge") +
@@ -1046,39 +1162,132 @@ ggplot(counts, aes(x = offer_type, y = count, fill = event)) +
        y = "Count") +
   scale_fill_manual(values = colors)  
 
+
 ```
+
 INTERPRETATIONS:
 
-1) BOGO offer appears to be especially successful in views and decent with the completions, indicating a strong level of customer interest.
+1)  BOGO offer appears to be especially successful in views and decent with the completions, indicating a strong level of customer interest.
 
-2) On the other hand discount offer does attract better customers but slightly less than BOGO.
+2)  On the other hand discount offer does attract better customers but slightly less than BOGO.
 
-3) However informational offers did not result in any completion of the offer and also had only a notable views and receiving which is much less compared to both BOGO and discount. 
+3)  However informational offers did not result in any completion of the offer and also had only a notable views and receiving which is much less compared to both BOGO and discount.
 
 To conclude, based on the completions, discount offer had an upper hand as it attracted many customers.
 
 ```{r}
-#Offer Type Preferences by Gende
+# Offer Preferences by Age Group
+age_offer_counts <- final %>%
+  group_by(age_group, offer_type) %>%
+  summarize(count = n()) 
+
+colors <- c("#ad6a6c", "#d0ada7", "#e8d6cb")
+ggplot(age_offer_counts, aes(x = age_group, y = count, fill = offer_type)) +
+  geom_bar(stat = 'identity', position = 'dodge') +
+  labs(title = 'Offer Type Preferences by Age Group',
+       x = 'Age Group',
+       y = 'Count') +
+  theme_minimal() +
+    theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust = 1)) +
+    scale_fill_manual(values = colors)  
+```
+```{r}
+str(final)
+head(final)
+```
+
+OBSERVATIONS: THis plot represent the distribution of offers (BOGO, discount, and informational) across different age groups. It is clearly visible that BOGO offers is the highest across all age groups, then the discounts and informational stands at the last. This plot gives an overview of how the offers are being distributed among various age groups.
+
+```{r}
+#Offer Type Preferences by Gender
 offer_counts <- table(final$gender, final$offer_type)
 offer_counts_df <- as.data.frame(offer_counts)
 colnames(offer_counts_df) <- c('gender', 'offer_type', 'count')  
-
+ 
 # Plot using ggplot2
 ggplot(offer_counts_df, aes(x = gender, y = count, fill = offer_type)) +
   geom_bar(stat = 'identity', position = 'dodge') +
   labs(title = 'Offer Type Preferences by Gender',
        x = 'Gender',
        y = 'Count') +
-  theme_minimal() 
+  theme_minimal() +scale_fill_manual(values = colors)
 ```
 
-
-OBSERVATIONS:
-This indicates the engagement patterns with different offer types such as BOGO, Discount, and Informational offers for different gender categories(Female,male, other)
+OBSERVATIONS: This indicates the engagement patterns with different offer types such as BOGO, Discount, and Informational offers for different gender categories(Female,male, other)
 
 1)Men show more engagement than women and other gender categories in all the three offer types(BOGO, discount, informational).
 
 2)Women show a huge count of involvement, but are slightly behind men with no much difference.
 
-3) Other gender categories are nearly ignorable when compared to men and women.
+3)  Other gender categories are nearly ignorable when compared to men and women.
+
+```{r}
+# Filter data for each gender
+final_male <- final %>% filter(gender == "M")
+final_female <- final %>% filter(gender == "F")
+final_other <- final %>% filter(gender == "O")
+colors <- c("#34BE82", "#FF7F3F", "#1746A2")
+
+
+#MALe
+ggplot(final_male, aes(x = age_group, fill = event)) +
+  geom_bar(position = 'dodge') +
+  labs(title = 'Offer event type by Age Group - Male',
+       x = 'Age Group',
+       y = 'Count',
+       fill = 'Event Type') +
+  theme_minimal() +  scale_fill_manual(values = colors)+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
+#FEMALE
+ggplot(final_female, aes(x = age_group, fill = event)) +
+  geom_bar(position = 'dodge') +
+  labs(title = 'Offer event type by Age Group - Female',
+       x = 'Age Group',
+       y = 'Count',
+       fill = 'Event Type') +
+  theme_minimal() +scale_fill_manual(values = colors)+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
+#OTHERS
+ggplot(final_other, aes(x = age_group, fill = event)) +
+  geom_bar(position = 'dodge') +
+  labs(title = 'Offer event type by Age Group - Other',
+       x = 'Age Group',
+       y = 'Count',
+       fill = 'Event Type') +
+  theme_minimal() +scale_fill_manual(values = colors)+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+
+```{r}
+ggplot(final, aes(x = age_group, fill = event)) +
+  geom_bar(position = 'dodge') +
+  labs(title = 'Offer Acceptance by Age Group',
+       x = 'Age Group',
+       y = 'Count',
+       fill = 'Event Type') +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+
+## HYPOTHESIS TESTING(CHI SQUARE)
+
+```{r}
+contingency_table <- table(final$gender, final$age_group)
+contingency_table
+# Perform the chi-squared test
+chi_squared_result <- chisq.test(contingency_table)
+
+# View the result
+print(chi_squared_result)
+```
+
+**Null Hypothesis (H0):** There is no association or relationship between the two categorical variables, "gender" and "age_group" In other words, they are independent of each other.
+
+**Alternative Hypothesis (H1):** There is an association or relationship between the two categorical variables, "gender" and "age_group" They are not independent of each other.
+
+**P-Value:** The p-value associated with the test statistic is less than 2.2e-16, which is essentially zero.
+
+Given the extremely low p-value (essentially zero), we can conclude that there is a significant association or relationship between the two categorical variables tested in the chi-squared test (likely "gender" and "age_group"). In other words, we reject the null hypothesis (H0) that there is no association between these variables. Therefore, there is strong evidence to suggest that "gender" and "age_group" are not independent of each other, and there is a significant relationship between them.
 
