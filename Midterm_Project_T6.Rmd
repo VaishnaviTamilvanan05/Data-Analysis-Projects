@@ -1265,7 +1265,6 @@ event_offer <- df_event %>%
 
 head(event_offer)
 
-# Drop the 'dict_value' column, as 'offer_alias' provides the offer identifier
 #event_offer <- event_offer %>% select(-value_data)
 ```
 
@@ -1277,8 +1276,6 @@ offer_completed <- event_offer[event_offer$event == 'offer completed', ]
 # Count the number of times each offer is received and completed
 p0 <- table(offer_received$offer_alias)
 p2 <- table(offer_completed$offer_alias)
-
-# Ensure both p0 and p2 have the same names
 combined_names <- intersect(names(p0), names(p2))
 p0 <- p0[combined_names]
 p2 <- p2[combined_names]
@@ -1293,10 +1290,8 @@ print(overall_complete_rate)
 ```
 
 ```{r}
-# Install and load necessary packages
 library(ggplot2)
 
-# Create a data frame for visualization
 completion_data <- data.frame(
   Offer = names(overall_complete_rate),
   CompletionRate <- overall_complete_rate
@@ -1318,8 +1313,6 @@ ggplot(completion_data, aes(x = Offer, y = CompletionRate)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)+
             geom_text(aes(label = scales::percent(CompletionRate, scale = 100)), vjust = -0.5, size = 4)+
           scale_y_continuous(labels = scales::percent_format(scale = 1), breaks = seq(0, 1, by = 0.2)) ) # Format y-axis as percentage
-  # Add data labels
-  # Rotate x-axis labels
 
 ```
 
@@ -1332,8 +1325,6 @@ Observations:
 ```{r}
 # Filter the event_offer data frame for 'offer received' events
 offer_received <- event_offer[event_offer$event == 'offer received', ]
-
-# Count the number of times each offer was received
 p0 <- table(offer_received$offer_alias)
 ```
 
@@ -1359,7 +1350,6 @@ barplot(p0,
         cex.axis = 1.2)
 
 ```
-
 Observation: Each of the ten offers received a similar number of times, with approximately 7,600 receptions for each offer. The distribution of offer receptions was consistent, indicating that there was no significant discrepancy in how often different offers were received by customers.
 
 
@@ -1538,8 +1528,6 @@ ggplot(channel_counts, aes(x = channels, y = count)) +
   geom_bar(stat = "identity", fill = "#618264", color = "black", size = 0.2) +
   labs(x = "Channels", y = "Count", title = "Promotional Channels") +
   theme_minimal() 
-
-
 ```
 
 OBSERVATIONS: Customers received offers via a combination of four
@@ -1551,20 +1539,11 @@ plot, it is clearly visible that combination of all the four channels
 leads.
 
 ```{r}
-#Correlation between rewards, difficulty and duration
-correlation_matrix <- cor(df_offers[, c('reward', 'difficulty', 'duration')])
-heatmap(correlation_matrix, main='Correlation between rewards, difficulty and duration',cexRow = 1,cexCol = 1)
-
+colors <- c("#EFF6EE", "#273043", "#9197AE","darkgray")
+pie(channel_counts$count, labels = channel_counts$channels, main='Distribution of Number of Channels per Offer', col=colors)
+legend("bottomleft", legend=channel_counts$count, fill=colors, title="Occurance of Channels")
 ```
-
-INTERPRETATION
-
-The above observations shows that the variables reward and difficulty ,
-reward and duration had a positive correlation indicating that with
-increase in reward, duration and the difficulty will also increase.
-
-Difficulty and reward also seems to have a positive correlation
-indicating that increase in difficulty tends to increase the reward.
+OBSERVATION: The above observation shows that the combination of 3 channels had the maximum count per offer.
 
 ```{r}
 #Offers based on difficulty and channels through which they are offered
@@ -1585,40 +1564,10 @@ ggplot(df_offers, aes(x = as.factor(difficulty), fill = channels)) +
 #Distribution of Number of Channels per Offer
 channels_count <- sapply(df_offers$channels, function(x) length(unlist(strsplit(x, ','))))
 barplot(table(channels_count), main='Distribution of Number of Channels per Offer', col='#EF9595', xlab='Number of Channels', ylab='Count')
-
-
 ```
 
 OBSERVATION: The above observation shows that the combination of 3
 channels had the maximum count per offer.
-
-## MERGING ALL THE CSV FILES FOR BETTER RESULTS
-
-```{r}
-# df_offers and df_cust_offers
-merged_df <- merge(df_cust_offer, customers, by.x = "customer_id", by.y = "id")
-head(merged_df)
-#customers and merged_df
-final <- merge(merged_df,df_offers , by.x = "value_data", by.y = "id")
-head(final)
-```
-**Categorical and Numerical variables of final df:**
-
-```{r}
-#checking numerical cols of final df
-numerical_cols <- sapply(final, is.numeric)
-numerical_colnames <- names(final)[numerical_cols]
-
-categorical_colnames <- names(final)[!numerical_cols]
-
-max_length <- max(length(numerical_colnames), length(categorical_colnames))
-
-numerical_colnames <- c(numerical_colnames, rep(NA, max_length - length(numerical_colnames)))
-categorical_colnames <- c(categorical_colnames, rep(NA, max_length - length(categorical_colnames)))
-var_df <- data.frame(Numeric = numerical_colnames, Categorical = categorical_colnames)
-
-print(var_df)
-```
 
 ```{r}
 colors <- c("#ad6a6c", "#d0ada7", "#e8d6cb")
@@ -1648,7 +1597,7 @@ counts <- final %>%
   group_by(offer_type, event) %>%
   summarize(count = n())
 colors <- c("#34BE82", "#FF7F3F", "#1746A2")
-# Create a stacked bar plot
+
 ggplot(counts, aes(x = offer_type, y = count, fill = event)) +
   geom_bar(stat = "identity", position = "dodge") +
   labs(title = "Event Counts for Each Offer Type",
@@ -1708,7 +1657,6 @@ offer_counts_df <- as.data.frame(offer_counts)
 colnames(offer_counts_df) <- c('gender', 'offer_type', 'count')  
 colors <- c("#ad6a6c", "#d0ada7", "#e8d6cb")
 
-# Plot using ggplot2
 ggplot(offer_counts_df, aes(x = gender, y = count, fill = offer_type)) +
   geom_bar(stat = 'identity', position = 'dodge') +
   labs(title = 'Offer Type Preferences by Gender',
@@ -1738,7 +1686,7 @@ final_other <- final %>% filter(gender == "O")
 colors <- c("#34BE82", "#FF7F3F", "#1746A2")
 
 
-#MALe
+#MALE
 ggplot(final_male, aes(x = age_group, fill = event)) +
   geom_bar(position = 'dodge') +
   labs(title = 'Offer event type by Age Group - Male',
@@ -1773,13 +1721,9 @@ ggplot(final_other, aes(x = age_group, fill = event)) +
 
 ```{r}
 contingency_table <- table(final$gender, final$age_group)
-# Perform the chi-squared test
 chi_squared_result <- chisq.test(contingency_table)
-
-# View the result
 print(chi_squared_result)
 ```
-
 **Null Hypothesis (H0):** There is no association or relationship
 between the two categorical variables, "gender" and "age_group" In
 other words, they are independent of each other.
@@ -1790,7 +1734,6 @@ are not independent of each other.
 
 **P-Value:** The p-value associated with the test statistic is less than
 2.2e-16, which is essentially zero.
-
 Given the extremely low p-value (essentially zero), we can conclude that
 there is a significant association or relationship between the two
 categorical variables tested in the chi-squared test (likely "gender"
