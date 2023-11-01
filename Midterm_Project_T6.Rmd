@@ -1,33 +1,33 @@
 ---
-title: "Midterm_Project_T6"
+title: "Data Brew: Brewing Success with Starbucks Customer Insights"
+subtitle: "TEAM 6 - Chekitha Swayampu, Hrushikesh Sai Seshagiri Chowdary Uppalapati, Swathi Murali Srinivasan, Vaishnavi Tamilvanan"
 date: "2023-10-20"
 output:
-  html_document:
-    code_folding: hide
-    number_sections: false
-    toc: yes
-    toc_depth: 3
-    toc_float: yes
+  prettydoc::html_pretty:
+    theme: hpstr
+    toc: true
   pdf_document:
     toc: yes
-    toc_depth: '3'
+    toc_depth: 3
 ---
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Data Brew: Brewing Success with Starbucks Customer Insights
+# Abstract:
+
+For our project, we embarked on an analysis of Starbucks' marketing strategies with the goal of enhancing customer engagement, satisfaction, and the effectiveness of their promotions. This initiative was documented in an R Markdown file within our GitHub repository and made use of a wide array of visualizations and statistical methods.
+
+This initiative is driven by the ambition to maximize customer engagement, elevate overall customer satisfaction, and fortify the success of Starbucks' marketing endeavors.By deciphering the ideal promotion channels and personalizing offerings, we strive to enhance efficiency and effectiveness, ensuring every marketing investment is rewarding, and that Starbucks continues to delight its customers
 
 The data is contained in three files:
 
-portfolio.csv - data about offers sent to customers (10 offers x 6
-columns)
+portfolio.csv - data about offers sent to customers (10 offers x 6 columns)
 
-profile.csv - demographic data of customers (17,000 customers x 5
-columns)
+profile.csv - demographic data of customers (17,000 customers x 5 columns)
 
-transcript.csv - customer response to offers and transactions made
-(306,648 events x 4 columns)
+transcript.csv - customer response to offers and transactions made (306,648 events x 4 columns)
 
 ```{r, results='markup'}
 # Importing and reading the Datasets 
@@ -147,7 +147,7 @@ colnames(df_cust_offer)[colnames(df_cust_offer) == "person"] <- "customer_id"
 tail(df_cust_offer)
 ```
 
-## **Data Transformation:**
+# **Data Transformation:**
 
 ### **Transform `df_offers`**
 
@@ -192,6 +192,7 @@ head(df_cust_offer_subset)
 df_cust_offer<- df_cust_offer_subset
 head(df_cust_offer)
 ```
+
 ```{r}
 df_offers
 df_cust_offer
@@ -212,6 +213,7 @@ customers$age_group <- cut(customers$age, breaks = age_bins, labels = age_labels
 ## MERGING ALL THE CSV FILES FOR BETTER RESULTS
 
 Merging the datasets based on common columns like customer_id,id and value_data
+
 ```{r}
 # Merge df_offers and df_cust_offer on the common column 'id'
 merged_df <- left_join(customers, df_cust_offer,by = c('id' = 'customer_id'))
@@ -221,6 +223,7 @@ final_merged_df
 print(head(final_merged_df))
 
 ```
+
 ```{r}
 na_counts <- colSums(is.na(final_merged_df))
 print(na_counts)
@@ -403,8 +406,7 @@ cat("Number of matches between 'completed_hourly' and 'transaction_hourly':", ma
 
 ```
 OBSERVATION:
-The indices of all three Series are the same, signifying the hours elapsed since the campaign began. Now we can conveniently create plots to illustrate how events are distributed over time.  
-
+The indices of all three Series are the same, signifying the hours elapsed since the campaign began. Now we can conveniently create plots to illustrate how events are distributed over time.
 
 ```{r}
 
@@ -589,6 +591,7 @@ curve_chart_repeat_business <- ggplot(retention_data, aes(x = days_elapsed, y = 
 print(curve_chart_retention)
 print(curve_chart_repeat_business)
 ```
+
 ANSWER TO SMART QUESTION:
 
 The initial graph reveals a consistent upward trend in customer retention rates over time among those who have used the offer only once. This trend signifies a positive indicator, suggesting that customers are not only enjoying the offers they receive but also showing potential for becoming repeat customers. This group may represent customers who are initially enticed by the offer and, as their experience with Starbucks improves, are more likely to return for future purchases.
@@ -660,6 +663,7 @@ interactive_plot
 
 
 ```
+
 OBSERVATION:
 
 Average Time Between Receiving an Offer and Viewing It: The analysis of the data has shown that the average time between receiving a discount offer and viewing it is 1.98 days. This is the typical time it takes for customers to engage with the offer after receiving it.
@@ -667,8 +671,6 @@ Average Time Between Receiving an Offer and Viewing It: The analysis of the data
 Effect on Conversion Rates: Based on the scatter plot and the even scattering of points, it appears that the time gap between receiving an offer and viewing it does not have a significant impact on conversion rates. In other words, customers are equally likely to convert regardless of how quickly or slowly they view the offer after receiving it.
 
 In summary, the data suggests that the time gap between receiving a discount offer and viewing it does not strongly influence conversion rates, as there is no apparent pattern or trend in the scatter plot.
-
-
 
 ### **EDA on Customer Data:**
 
@@ -695,12 +697,9 @@ cat("Standard Deviation of Age:", age_sd, "\n")
 
 #### **Observations:**
 
--   The customer age range spans from 18 years as the youngest to 101
-    years as the oldest.
+-   The customer age range spans from 18 years as the youngest to 101 years as the oldest.
 
--   The distribution of customer ages appears to approximate a normal
-    distribution, with a mean and standard deviation of approximately 54
-    and 17, respectively.
+-   The distribution of customer ages appears to approximate a normal distribution, with a mean and standard deviation of approximately 54 and 17, respectively.
 
 ### Univariate Analysis - `gender`
 
@@ -739,9 +738,8 @@ pie_chart <- plot_ly(
 pie_chart
 ```
 
-**Observations:** The customer base consists of a larger proportion of
-males (57.2%) compared to females (41.3%), with a minor representation
-(1.4%) from customers identifying with other genders.
+**Observations:** 
+The customer base consists of a larger proportion of males (57.2%) compared to females (41.3%), with a minor representation (1.4%) from customers identifying with other genders.
 
 ```{r}
 library(ggplot2)
@@ -762,20 +760,15 @@ ggplot(data = NULL, aes(x = names(age_group_percentage), y = age_group_percentag
 
 #### Observations:
 
--   The largest age group among customers is 56-65 years old, closely
-    followed by the 46-55 years old group.
+-   The largest age group among customers is 56-65 years old, closely followed by the 46-55 years old group.
 
 -   The third largest age group consists of customers aged 66-75 years.
 
--   Collectively, the top three age groups represent approximately 60%
-    of the customer base.
+-   Collectively, the top three age groups represent approximately 60% of the customer base.
 
--   This distribution is logical as individuals between 46 and 75 years
-    of age tend to have more available time to visit cafes compared to
-    younger age groups.
+-   This distribution is logical as individuals between 46 and 75 years of age tend to have more available time to visit cafes compared to younger age groups.
 
--   Additionally, they typically have better mobility than those above
-    75 years old, making them more likely to be cafe customers.
+-   Additionally, they typically have better mobility than those above 75 years old, making them more likely to be cafe customers.
 
 ### Univariate Analysis - `income`
 
@@ -832,18 +825,11 @@ legend("topright", legend = paste(levels(customers$income_group), " (", income_g
 
 #### Observations:
 
--   Customer Income Range: The income of customers spans from 30k to
-    120k, with an average income of 65.4k.
+-   Customer Income Range: The income of customers spans from 30k to 120k, with an average income of 65.4k.
 
--   Dominant Income Groups: The top two income groups are those earning
-    60-75k and 45-60k annually, collectively representing around 50% of
-    the customer base.
+-   Dominant Income Groups: The top two income groups are those earning 60-75k and 45-60k annually, collectively representing around 50% of the customer base.
 
--   Resemblance to Population: The income distribution among customers
-    closely mirrors that of the general population. However, individuals
-    with very low income might face challenges affording frequent visits
-    to cafes, while those with extremely high income might opt for
-    alternative coffee enjoyment methods.
+-   Resemblance to Population: The income distribution among customers closely mirrors that of the general population. However, individuals with very low income might face challenges affording frequent visits to cafes, while those with extremely high income might opt for alternative coffee enjoyment methods.
 
 ### Bivariate Analysis - `age` vs `gender`
 
@@ -864,16 +850,11 @@ ggplot(customers, aes(x = gender, y = age, color = gender)) +
 
 **Observations:**
 
--   **Women are more likely to visit Starbucks than men.** This is
-    because there are more women in the 20-30 age range, which is the
-    most common age range for Starbucks customers.
+-   **Women are more likely to visit Starbucks than men.** This is because there are more women in the 20-30 age range, which is the most common age range for Starbucks customers.
 
--   **Men are more likely to visit Starbucks in their 40s and 50s, while
-    women are more likely to visit Starbucks in their 30s and 40s.**
+-   **Men are more likely to visit Starbucks in their 40s and 50s, while women are more likely to visit Starbucks in their 30s and 40s.**
 
--   **There is a slight correlation between age and gender, with younger
-    customers being more likely to be female and older customers being
-    more likely to be male.**
+-   **There is a slight correlation between age and gender, with younger customers being more likely to be female and older customers being more likely to be male.**
 
 ### Bivariate Analysis - `income` vs `gender`
 
@@ -910,18 +891,11 @@ ggplot(customers, aes(x = gender, y = income, color = gender)) +
 
 #### Observations:
 
--   Male customers have a right-skewed income distribution, indicating
-    that a larger proportion of male customers falls within the lower
-    half of the income spectrum among the company's customer base.
+-   Male customers have a right-skewed income distribution, indicating that a larger proportion of male customers falls within the lower half of the income spectrum among the company's customer base.
 
--   Female customers have a significantly higher average income compared
-    to customers of other genders. This disparity in income may be
-    attributed to the assumption that female customers, on average, are
-    older than customers in other gender groups.
+-   Female customers have a significantly higher average income compared to customers of other genders. This disparity in income may be attributed to the assumption that female customers, on average, are older than customers in other gender groups.
 
--   On average, female customers have an income of \$71,000, while male
-    customers have an average income of \$61,000. Customers of other
-    genders have an average income of \$63,000.
+-   On average, female customers have an income of \$71,000, while male customers have an average income of \$61,000. Customers of other genders have an average income of \$63,000.
 
 ### Bivariate Analysis - `income` vs `age`
 
@@ -945,27 +919,17 @@ ggplot(summary_data, aes(x = age_group, y = mean_income, fill = age_group)) +
 
 #### Observations:
 
--   Customers in the two younger age groups (18-35 years old) have an
-    average annual income of approximately \$51,000 USD.
+-   Customers in the two younger age groups (18-35 years old) have an average annual income of approximately \$51,000 USD.
 
--   The middle age groups (36-55 years old) exhibit an average annual
-    income of about \$65,000 USD.
+-   The middle age groups (36-55 years old) exhibit an average annual income of about \$65,000 USD.
 
--   All age groups above 56 years old display very similar average
-    annual incomes, hovering around \$70,000 USD.
+-   All age groups above 56 years old display very similar average annual incomes, hovering around \$70,000 USD.
 
--   On average, older customers of the company tend to have higher
-    incomes.
+-   On average, older customers of the company tend to have higher incomes.
 
--   The company's customers across all age groups have substantially
-    higher average incomes compared to the median income of US citizens
-    in 2018, which stood at \$30,119 USD.
+-   The company's customers across all age groups have substantially higher average incomes compared to the median income of US citizens in 2018, which stood at \$30,119 USD.
 
--   The use of the 2018 median income as a benchmark is justified
-    because the dataset contains records only up to July 2018, and
-    customer profile data, including income, is typically not frequently
-    updated. Hence, it's more relevant to compare customer income with
-    the population's income in the year they last became members.
+-   The use of the 2018 median income as a benchmark is justified because the dataset contains records only up to July 2018, and customer profile data, including income, is typically not frequently updated. Hence, it's more relevant to compare customer income with the population's income in the year they last became members.
 
 ### `income` vs `gender` vs `age`
 
@@ -989,26 +953,13 @@ scatter_3d
 
 #### **Observation:**
 
--   **Income tends to increase with age for both men and women.** This
-    is evident from the fact that the scatterplot shows a general upward
-    trend from left to right.
+-   **Income tends to increase with age for both men and women.** This is evident from the fact that the scatterplot shows a general upward trend from left to right.
 
--   Another interesting thing we can observe is that female customers
-    with higher incomes, on average, are older than customers in other
-    gender groups.
+-   Another interesting thing we can observe is that female customers with higher incomes, on average, are older than customers in other gender groups.
 
 #### Answer to SMART question based on the above analysis:
 
-***-\>The customer base consists of a larger proportion of males (57.2%)
-compared to females (41.3%), with a minor representation (1.4%) from
-customers identifying with other genders. The customer age range spans
-from 18 years as the youngest to 101 years as the oldest. The income of
-customers spans from 30k to 120k, with an average income of 65.4k. The
-income distribution closely mirrors that of the general population.
-There is a logical relationship between age and cafe visits, as
-individuals between 46 and 75 years tend to have more available time to
-visit cafes. The income distribution varies between genders, with
-females having higher average incomes.***
+***-\>The customer base consists of a larger proportion of males (57.2%) compared to females (41.3%), with a minor representation (1.4%) from customers identifying with other genders. The customer age range spans from 18 years as the youngest to 101 years as the oldest. The income of customers spans from 30k to 120k, with an average income of 65.4k. The income distribution closely mirrors that of the general population. There is a logical relationship between age and cafe visits, as individuals between 46 and 75 years tend to have more available time to visit cafes. The income distribution varies between genders, with females having higher average incomes.***
 
 ## *How has the customer base evolved over time, both in terms of new member sign-ups and member growth, and are there any notable trends or changes?*
 
@@ -1148,22 +1099,13 @@ ggplot(data = df_member_growth) +
 
 #### Observations:
 
--   The dataset includes customers who became members between July 2013
-    and July 2018.
+-   The dataset includes customers who became members between July 2013 and July 2018.
 
--   Only a small percentage of customers (approximately 2.2%) chose to
-    become members from 2013 to the middle of 2015.
+-   Only a small percentage of customers (approximately 2.2%) chose to become members from 2013 to the middle of 2015.
 
--   The number of new members started to increase significantly from the
-    middle of 2015 and experienced a substantial growth spike from the
-    middle of 2017. This suggests that the company likely executed
-    successful campaigns during these periods, resulting in a
-    significant boost in member growth.
+-   The number of new members started to increase significantly from the middle of 2015 and experienced a substantial growth spike from the middle of 2017. This suggests that the company likely executed successful campaigns during these periods, resulting in a significant boost in member growth.
 
--   However, in early 2018, there was a noticeable decline in daily
-    member growth, with a 31% decrease (from 24.4 to 16.8). This drop
-    may indicate that new strategies implemented during that time had a
-    negative impact on member growth.
+-   However, in early 2018, there was a noticeable decline in daily member growth, with a 31% decrease (from 24.4 to 16.8). This drop may indicate that new strategies implemented during that time had a negative impact on member growth.
 
 #### Member growth by Month:
 
@@ -1218,29 +1160,17 @@ ggplot(data = df_member, aes(x = factor(day_name, levels = c("Monday", "Tuesday"
 
 #### Observations:
 
--   August, October, and December experienced the highest influx of new
-    members, with August leading the way.
+-   August, October, and December experienced the highest influx of new members, with August leading the way.
 
--   Conversely, February had the lowest average number of new members,
-    indicating a drop in membership during this month.
+-   Conversely, February had the lowest average number of new members, indicating a drop in membership during this month.
 
--   Weekends, unsurprisingly, had higher member growth compared to
-    weekdays. Among weekdays, Tuesday showed the highest member growth.
+-   Weekends, unsurprisingly, had higher member growth compared to weekdays. Among weekdays, Tuesday showed the highest member growth.
 
--   On average, Friday had the fewest new members, making it the day
-    with the lowest member sign-ups.
+-   On average, Friday had the fewest new members, making it the day with the lowest member sign-ups.
 
 #### Answer to SMART question based on the above analysis:
 
-***-\> The dataset includes customers who became members between July
-2013 and July 2018. Daily member growth increased significantly from the
-middle of 2015, with a substantial spike in growth from the middle of
-2017, suggesting successful campaigns during these periods. However,
-there was a noticeable decline in early 2018, indicating that new
-strategies implemented at that time may have had a negative impact on
-member growth. August, October, and December experienced the highest
-influx of new members, with weekends and Tuesdays showing higher member
-growth. The data indicates fluctuations in member growth over time.***
+***-\> The dataset includes customers who became members between July 2013 and July 2018. Daily member growth increased significantly from the middle of 2015, with a substantial spike in growth from the middle of 2017, suggesting successful campaigns during these periods. However, there was a noticeable decline in early 2018, indicating that new strategies implemented at that time may have had a negative impact on member growth. August, October, and December experienced the highest influx of new members, with weekends and Tuesdays showing higher member growth. The data indicates fluctuations in member growth over time.***
 
 ## *What are the most popular offers and the influential factors driving the View rates of the Offers?*
 
@@ -1316,10 +1246,7 @@ ggplot(completion_data, aes(x = Offer, y = CompletionRate)) +
 
 ```
 
-Note: 
-Offers I and J are excluded from the plot because they are 
-informational offers and, as a result, they do not have any 'offer completed' 
-events associated with them.
+Note: Offers I and J are excluded from the plot because they are informational offers and, as a result, they do not have any 'offer completed' events associated with them.
 
 Observations:
 1. With remarkable completion rates of 70%, 67.4%, and 56.7%, respectively, 
@@ -1427,6 +1354,7 @@ Group-3: (I A G) email, mobile, web
 Group-4: (H) email, web
 
 Conclusions: 
+
 The study draws attention to how different promotion channels differ in their 
 efficacy: 
 1. Web-based offers (Group 1) have a little greater view rate than 
@@ -1524,9 +1452,6 @@ head(offers_numeric)
 ```
 
 ```{r}
-install.packages("corrplot")
-```
-```{r}
 # Load the corrplot library
 library(corrplot)
 
@@ -1568,6 +1493,7 @@ promotional strategy and increase client involvement by leveraging effective
 channels such as Social Media and focusing on 'discount' offers.***
 
 ## EDA for Portfolio
+
 ```{r}
 library(ggplot2)
 library(dplyr)
@@ -1582,6 +1508,7 @@ ggplot(channel_counts, aes(x = channels, y = count)) +
   labs(x = "Channels", y = "Count", title = "Promotional Channels") +
   theme_minimal() 
 ```
+
 OBSERVATIONS: Customers received offers via a combination of four different promotion channels: social media, email, mobile apps, and websites. The 10 offers use 4 different combinations of channels. Comparisons between offers using various channels can be used to determine the promotional impact of each channel. And from the above plot, it is clearly visible that combination of all the four channels leads.
 
 ```{r}
@@ -1589,6 +1516,7 @@ colors <- c("#EFF6EE", "#273043", "#9197AE","darkgray")
 pie(channel_counts$count, labels = channel_counts$channels, main='Distribution of Number of Channels per Offer', col=colors)
 legend("bottomleft", legend=channel_counts$count, fill=colors, title="Occurance of Channels")
 ```
+
 OBSERVATION: The above observation shows that the combination of 3 channels had the maximum count per offer.
 
 ```{r}
@@ -1612,6 +1540,7 @@ Difficulty refers to the minimum amount required to spend to avail an offer and 
 channels_count <- sapply(df_offers$channels, function(x) length(unlist(strsplit(x, ','))))
 barplot(table(channels_count), main='Distribution of Number of Channels per Offer', col='#EF9595', xlab='Number of Channels', ylab='Count')
 ```
+
 OBSERVATION: The above observation shows that the combination of 3 channels had the maximum count per offer.
 
 ```{r}
@@ -1648,11 +1577,9 @@ ggplot(counts, aes(x = offer_type, y = count, fill = event)) +
 ```
 INTERPRETATIONS:
 
-1)  BOGO offer appears to be especially successful in views and decent with the             completions, indicating a strong level of customer interest.
-2)  On the other hand discount offer does attract better customers but slightly less        than BOGO.
-3)  However informational offers did not result in any completion of the offer and also     had only a notable views and receiving which is much less compared to both BOGO and     discount.
-To conclude, based on the completions, discount offer had an upper hand
-as it attracted many customers.
+1)  BOGO offer appears to be especially successful in views and decent with the completions, indicating a strong level of customer interest.
+2)  On the other hand discount offer does attract better customers but slightly less than BOGO.
+3)  However informational offers did not result in any completion of the offer and also had only a notable views and receiving which is much less compared to both BOGO and discount. To conclude, based on the completions, discount offer had an upper hand as it attracted many customers.
 
 ```{r}
 # Offer Preferences by Age Group
@@ -1670,6 +1597,7 @@ ggplot(age_offer_counts, aes(x = age_group, y = count, fill = offer_type)) +
     theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust = 1)) +
     scale_fill_manual(values = colors)  
 ```
+
 OBSERVATIONS: THis plot represent the distribution of offers (BOGO, discount, and informational) across different age groups. It is clearly visible that BOGO offers is the highest across all age groups, then the discounts and informational stands at the last. This plot gives an overview of how the offers are being distributed among various age groups.
 
 ```{r}
@@ -1686,6 +1614,7 @@ ggplot(offer_counts_df, aes(x = gender, y = count, fill = offer_type)) +
        y = 'Count') +
   theme_minimal() +scale_fill_manual(values = colors)
 ```
+
 OBSERVATIONS: This indicates the engagement patterns with different offer types such as BOGO, Discount, and Informational offers for different gender categories(Female,male, other)
 1)  Men show more engagement than women and other gender categories in all the three offer types(BOGO, discount, informational).
 2)  Women show a huge count of involvement, but are slightly behind men with no much difference.
@@ -1747,18 +1676,12 @@ contingency_table <- table(final$gender, final$age_group)
 chi_squared_result <- chisq.test(contingency_table)
 print(chi_squared_result)
 ```
-**Null Hypothesis (H0):** There is no association or relationship
-between the two categorical variables, "gender" and "age_group" In
-other words, they are independent of each other.
 
-**Alternative Hypothesis (H1):** There is an association or relationship
-between the two categorical variables, "gender" and "age_group" They
-are not independent of each other.
+**Null Hypothesis (H0):** There is no association or relationship between the two categorical variables, "gender" and "age_group" In other words, they are independent of each other.
 
-**P-Value:** The p-value associated with the test statistic is less than
-2.2e-16, which is essentially zero. Given the extremely low p-value (essentially zero), we can conclude that there is a significant association or relationship between the two
-categorical variables tested in the chi-squared test (likely "gender" and "age_group"). In other words, we reject the null hypothesis (H0) that there is no association between these variables. Therefore, there is strong evidence to suggest that "gender" and "age_group" are not independent of each other, and there is a significant relationship between them.
+**Alternative Hypothesis (H1):** There is an association or relationship between the two categorical variables, "gender" and "age_group" They are not independent of each other.
 
+**P-Value:** The p-value associated with the test statistic is less than 2.2e-16, which is essentially zero. Given the extremely low p-value (essentially zero), we can conclude that there is a significant association or relationship between the two categorical variables tested in the chi-squared test (likely "gender" and "age_group"). In other words, we reject the null hypothesis (H0) that there is no association between these variables. Therefore, there is strong evidence to suggest that "gender" and "age_group" are not independent of each other, and there is a significant relationship between them.
 
 ## Which age groups are morelikely to accept offers thanothers? Do thesepreferences also differbased on gender?
 
