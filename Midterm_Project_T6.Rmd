@@ -1582,14 +1582,7 @@ ggplot(channel_counts, aes(x = channels, y = count)) +
   labs(x = "Channels", y = "Count", title = "Promotional Channels") +
   theme_minimal() 
 ```
-
-OBSERVATIONS: Customers received offers via a combination of four
-different promotion channels: social media, email, mobile apps, and
-websites. The 10 offers use 4 different combinations of channels.
-Comparisons between offers using various channels can be used to
-determine the promotional impact of each channel. And from the above
-plot, it is clearly visible that combination of all the four channels
-leads.
+OBSERVATIONS: Customers received offers via a combination of four different promotion channels: social media, email, mobile apps, and websites. The 10 offers use 4 different combinations of channels. Comparisons between offers using various channels can be used to determine the promotional impact of each channel. And from the above plot, it is clearly visible that combination of all the four channels leads.
 
 ```{r}
 colors <- c("#EFF6EE", "#273043", "#9197AE","darkgray")
@@ -1610,17 +1603,16 @@ ggplot(df_offers, aes(x = as.factor(difficulty), fill = channels)) +
        title = 'Offers based on difficulty and channels through which they are offered') +
   theme_minimal() +  
   theme(legend.position = "bottom")
-
 ```
+OBSERVATION:
+Difficulty refers to the minimum amount required to spend to avail an offer and the min amount requires starts from 0 till 20. The offer which came through two combination of channels had the highest amount to be spent to avail an offer with combination of 3 channels being the least. 
 
 ```{r}
 #Distribution of Number of Channels per Offer
 channels_count <- sapply(df_offers$channels, function(x) length(unlist(strsplit(x, ','))))
 barplot(table(channels_count), main='Distribution of Number of Channels per Offer', col='#EF9595', xlab='Number of Channels', ylab='Count')
 ```
-
-OBSERVATION: The above observation shows that the combination of 3
-channels had the maximum count per offer.
+OBSERVATION: The above observation shows that the combination of 3 channels had the maximum count per offer.
 
 ```{r}
 colors <- c("#ad6a6c", "#d0ada7", "#e8d6cb")
@@ -1634,15 +1626,11 @@ ggplot(data = as.data.frame(offer_counts), aes(x = Var1, y = Freq)) +
        x = "Offer Type",
        y = "Count") +
   scale_fill_manual(values = colors)
- 
-
 ```
 
 OBSERVATION:
 
-From the above observation BOGO and the discount offer type has the
-maximum count of nearly 66,000 and 62,000 respectively while the
-informational offer had the least count.
+From the above observation BOGO and the discount offer type has the maximum count of nearly 66,000 and 62,000 respectively while the informational offer had the least count.
 
 ```{r}
 # Summarize the data to get counts
@@ -1657,23 +1645,12 @@ ggplot(counts, aes(x = offer_type, y = count, fill = event)) +
        x = "Offer Type",
        y = "Count") +
   scale_fill_manual(values = colors)  
-
-
 ```
-
 INTERPRETATIONS:
 
-1)  BOGO offer appears to be especially successful in views and decent
-    with the completions, indicating a strong level of customer
-    interest.
-
-2)  On the other hand discount offer does attract better customers but
-    slightly less than BOGO.
-
-3)  However informational offers did not result in any completion of the
-    offer and also had only a notable views and receiving which is much
-    less compared to both BOGO and discount.
-
+1)  BOGO offer appears to be especially successful in views and decent with the             completions, indicating a strong level of customer interest.
+2)  On the other hand discount offer does attract better customers but slightly less        than BOGO.
+3)  However informational offers did not result in any completion of the offer and also     had only a notable views and receiving which is much less compared to both BOGO and     discount.
 To conclude, based on the completions, discount offer had an upper hand
 as it attracted many customers.
 
@@ -1692,16 +1669,8 @@ ggplot(age_offer_counts, aes(x = age_group, y = count, fill = offer_type)) +
   theme_minimal() +
     theme(axis.text.x = element_text(angle = 50, vjust = 1, hjust = 1)) +
     scale_fill_manual(values = colors)  
-
-
 ```
-
-OBSERVATIONS: THis plot represent the distribution of offers (BOGO,
-discount, and informational) across different age groups. It is clearly
-visible that BOGO offers is the highest across all age groups, then the
-discounts and informational stands at the last. This plot gives an
-overview of how the offers are being distributed among various age
-groups.
+OBSERVATIONS: THis plot represent the distribution of offers (BOGO, discount, and informational) across different age groups. It is clearly visible that BOGO offers is the highest across all age groups, then the discounts and informational stands at the last. This plot gives an overview of how the offers are being distributed among various age groups.
 
 ```{r}
 #Offer Type Preferences by Gender
@@ -1717,20 +1686,11 @@ ggplot(offer_counts_df, aes(x = gender, y = count, fill = offer_type)) +
        y = 'Count') +
   theme_minimal() +scale_fill_manual(values = colors)
 ```
+OBSERVATIONS: This indicates the engagement patterns with different offer types such as BOGO, Discount, and Informational offers for different gender categories(Female,male, other)
+1)  Men show more engagement than women and other gender categories in all the three offer types(BOGO, discount, informational).
+2)  Women show a huge count of involvement, but are slightly behind men with no much difference.
+3)  Other gender categories are nearly ignorable when compared to men and women.
 
-OBSERVATIONS: This indicates the engagement patterns with different
-offer types such as BOGO, Discount, and Informational offers for
-different gender categories(Female,male, other)
-
-1)Men show more engagement than women and other gender categories in all
-the three offer types(BOGO, discount, informational).
-
-2)Women show a huge count of involvement, but are slightly behind men
-with no much difference.
-
-3)  Other gender categories are nearly ignorable when compared to men
-    and women.
-    
 ```{r}
 # Filter data for each gender
 final_male <- final %>% filter(gender == "M")
@@ -1738,6 +1698,14 @@ final_female <- final %>% filter(gender == "F")
 final_other <- final %>% filter(gender == "O")
 colors <- c("#34BE82", "#FF7F3F", "#1746A2")
 
+ggplot(final, aes(x = age_group, fill = event)) +
+  geom_bar(position = 'dodge') +
+  labs(title = 'Offer event type by Age Group irrespective of gender',
+       x = 'Age Group',
+       y = 'Count',
+       fill = 'Event Type') +
+  theme_minimal() +  scale_fill_manual(values = colors)+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 
 #MALE
 ggplot(final_male, aes(x = age_group, fill = event)) +
@@ -1769,6 +1737,8 @@ ggplot(final_other, aes(x = age_group, fill = event)) +
   theme_minimal() +scale_fill_manual(values = colors)+
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 ```
+OBSERVATION:
+Across all age groups and gender, the most frequent event type is offer received, followed by offer viewed and offer completed. Both the male and female in the age group of 56-65 years have completed the most offers whereas the others in the range of 46-55years have completed the most offers.
 
 ## HYPOTHESIS TESTING(CHI SQUARE)
 
@@ -1786,14 +1756,11 @@ between the two categorical variables, "gender" and "age_group" They
 are not independent of each other.
 
 **P-Value:** The p-value associated with the test statistic is less than
-2.2e-16, which is essentially zero.
-Given the extremely low p-value (essentially zero), we can conclude that
-there is a significant association or relationship between the two
-categorical variables tested in the chi-squared test (likely "gender"
-and "age_group"). In other words, we reject the null hypothesis (H0)
-that there is no association between these variables. Therefore, there
-is strong evidence to suggest that "gender" and "age_group" are not
-independent of each other, and there is a significant
-relationship between them.
+2.2e-16, which is essentially zero. Given the extremely low p-value (essentially zero), we can conclude that there is a significant association or relationship between the two
+categorical variables tested in the chi-squared test (likely "gender" and "age_group"). In other words, we reject the null hypothesis (H0) that there is no association between these variables. Therefore, there is strong evidence to suggest that "gender" and "age_group" are not independent of each other, and there is a significant relationship between them.
 
+
+## Which age groups are morelikely to accept offers thanothers? Do thesepreferences also differbased on gender?
+
+According to the analysis we made,BOGO is the most preferred offer across all age groups, with the age group of 56-65 having the highest offer completion rates, then age group of 46-55.When compared to the women and other gender categories, men are more engaged for all offer types while Women are slightly less than men and other gender are almost negligible. Overall, the age group 56-65 appears to be more likely to accept offers, and while gender differences in engagement exist, preferences for offer types are generally consistent across demographics, with BOGO being the most popular.
 ##
