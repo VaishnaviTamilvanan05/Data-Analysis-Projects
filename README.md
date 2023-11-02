@@ -30,9 +30,9 @@ Here is the schema and explanation of each variable in the files:
 - time (int) - time in hours since start of test. The data begins at time t=0
 - value - (dict of strings) - either an offer id or transaction amount depending on the record
 # SMART Questions: 
-1. Does the combination of multiple communication channels significantly affect customer responsiveness, spending, and behavior within the dataset?              
-2. Are "BOGO" and "discount" offers correlated with the possibility that a customer would make a purchase?
-3. How can Starbucks personalize offers using past purchases and study demographic factors' impact on offer response?
-4. What's the average time between receiving an offer and viewing it, and does this time gap affect conversion rates?
+1. How do different promotional events (received, viewed, completed) affect customer retention and repeat business with Starbucks over time?             
+2. What is the profile of the customer base, including their gender distribution, age distribution, and income range, and how do these factors relate to each other?
+3. What are the most popular offers and the influential factors driving the View rates of the Offers?
+4. Which age groups are more likely to accept offers than others? Do these preferences also differ based on gender?
 
 
