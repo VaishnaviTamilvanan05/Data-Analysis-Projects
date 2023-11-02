@@ -10,23 +10,11 @@ output:
     toc: yes
     toc_depth: 3
 ---
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Abstract:
-
-For our project, we embarked on an analysis of Starbucks' marketing strategies with the goal of enhancing customer engagement, satisfaction, and the effectiveness of their promotions. This initiative was documented in an R Markdown file within our GitHub repository and made use of a wide array of visualizations and statistical methods.
-
-This initiative is driven by the ambition to maximize customer engagement, elevate overall customer satisfaction, and fortify the success of Starbucks' marketing endeavors.By deciphering the ideal promotion channels and personalizing offerings, we strive to enhance efficiency and effectiveness, ensuring every marketing investment is rewarding, and that Starbucks continues to delight its customers
-
-The data is contained in three files:
-
-portfolio.csv - data about offers sent to customers (10 offers x 6 columns)
-
-profile.csv - demographic data of customers (17,000 customers x 5 columns)
-
-transcript.csv - customer response to offers and transactions made (306,648 events x 4 columns)
 
 ```{r, results='markup'}
 # Importing and reading the Datasets 
@@ -146,9 +134,9 @@ colnames(df_cust_offer)[colnames(df_cust_offer) == "person"] <- "customer_id"
 tail(df_cust_offer)
 ```
 
-# **Data Transformation:**
+# **Data Transformation**
 
-### **Transform `df_offers`**
+## Transform `df_offers`
 
 Add an alias to each offer for easier recognition and referencing.
 
@@ -166,7 +154,7 @@ df_offers$offer_alias <- LETTERS[1:nrow(df_offers)]
 head(df_offers)
 ```
 
-### **Transform `df_cust_offer`**
+## Transform `df_cust_offer`
 
 ```{r}
 # Extract the 'customer_id' and 'event' columns
@@ -192,13 +180,7 @@ df_cust_offer<- df_cust_offer_subset
 head(df_cust_offer)
 ```
 
-```{r}
-df_offers
-df_cust_offer
-customers
-```
-
-#### Dividing customers into age groups:
+## Dividing customers into age groups:
 
 ```{r}
 # Define the age bins and labels
@@ -209,28 +191,26 @@ age_labels <- c('18-25ys', '26-35ys', '36-45ys', '46-55ys', '56-65ys', '66-75ys'
 customers$age_group <- cut(customers$age, breaks = age_bins, labels = age_labels, include.lowest = TRUE)
 ```
 
-## MERGING ALL THE CSV FILES FOR BETTER RESULTS
+## MERGING ALL THE CSV FILES
 
 Merging the datasets based on common columns like customer_id,id and value_data
 
 ```{r}
 # Merge df_offers and df_cust_offer on the common column 'id'
 merged_df <- left_join(customers, df_cust_offer,by = c('id' = 'customer_id'))
-merged_df
+head(merged_df)
 final_merged_df <- full_join(merged_df, df_offers, by = c('value_data' = 'id'))
-final_merged_df
-print(head(final_merged_df))
-
+head(final_merged_df)
 ```
 
 ```{r}
 na_counts <- colSums(is.na(final_merged_df))
 print(na_counts)
 final<-na.omit(final_merged_df)
-final
+head(final)
 ```
 
-**Categorical and Numerical variables of final df:**
+## Categorical and Numerical variables of final df
 
 ```{r}
 #checking numerical cols of final df
@@ -245,12 +225,12 @@ numerical_colnames <- c(numerical_colnames, rep(NA, max_length - length(numerica
 categorical_colnames <- c(categorical_colnames, rep(NA, max_length - length(categorical_colnames)))
 var_df <- data.frame(Numeric = numerical_colnames, Categorical = categorical_colnames)
 
-print(var_df)
+print(head(var_df))
 ```
-
+# **EDA and SMART questions**
 ## **EDA on transcripts data:**
 
-## *What's the average time between receiving an offer and viewing it, and does this time gap affect conversion rates?*
+### Q1. What's the average time between receiving an offer and viewing it, and does this time gap affect conversion rates?
 
 ```{r}
 library(ezids)
@@ -294,7 +274,7 @@ interactive_plot <- ggplotly(p)
 interactive_plot
 ```
 
-OBSERVATION:
+**OBSERVATION:** 
 
 1.  The dataset contains 138,953 transactions, which is more than four times the number of completed offers. This suggests that many customers made multiple purchases without the influence of an offer. This indicates a high level of customer loyalty, which is expected, given that Starbucks primarily offers fast-moving consumer goods such as coffee and food.
 
@@ -358,9 +338,9 @@ interactive_plot
 
 ```
 
-OBSERVATION: The above plot reveals six distinct peaks of events during the campaign, primarily associated with the reception of offers, followed by subsequent events like offer views, completions, and purchases.
+**OBSERVATION:** The above plot reveals six distinct peaks of events during the campaign, primarily associated with the reception of offers, followed by subsequent events like offer views, completions, and purchases.
 
-\##*Event Occurrences Across Time - A Detailed Analysis*
+### Event Occurrences Across Time - A Detailed Analysis
 
 ```{r}
 # Libraries
@@ -407,7 +387,7 @@ cat("Number of matches between 'completed_hourly' and 'transaction_hourly':", ma
 
 ```
 
-OBSERVATION: The indices of all three Series are the same, signifying the hours elapsed since the campaign began. Now we can conveniently create plots to illustrate how events are distributed over time.
+**OBSERVATION**: The indices of all three Series are the same, signifying the hours elapsed since the campaign began. Now we can conveniently create plots to illustrate how events are distributed over time.
 
 ```{r}
 
@@ -521,11 +501,11 @@ p_hours <- ggplot(combined_data_hours, aes(x = hours_elapsed)) +
 grid.arrange(p_days, p_hours, ncol = 2)
 ```
 
-OBSERVATION:
+**OBSERVATION:** 
 
 The stacked plot clearly illustrates a robust correlation between individuals viewing offers and subsequently using them. In most cases, when a person viewed an offer, they promptly took action, often within a few hours of seeing it. This pattern remained consistent when we examined the data on a daily basis, indicating that a significant number of customers not only engaged with the offer but also completed the offer on the very same day they encountered it.
 
-## *How do different promotional events (received, viewed, completed) affect customer retention and repeat business with Starbucks over time?*
+### How do different promotional events (received, viewed, completed) affect customer retention and repeat business with Starbucks over time?
 
 ```{r}
 # Load necessary libraries
@@ -594,7 +574,7 @@ print(curve_chart_retention)
 print(curve_chart_repeat_business)
 ```
 
-ANSWER TO SMART QUESTION:
+**ANSWER TO SMART QUESTION:**
 
 The initial graph reveals a consistent upward trend in customer retention rates over time among those who have used the offer only once. This trend signifies a positive indicator, suggesting that customers are not only enjoying the offers they receive but also showing potential for becoming repeat customers. This group may represent customers who are initially enticed by the offer and, as their experience with Starbucks improves, are more likely to return for future purchases.
 
@@ -602,9 +582,8 @@ The second graph depicts a similar positive trend in customer retention rates ov
 
 However, it's important to note that this exploratory data analysis (EDA) focuses solely on the duration of the campaign. To maximize long-term customer retention, Starbucks should consider tailoring their offers to specifically target customers who are less likely to return in the future. Identifying and addressing the needs and preferences of this group may involve a more personalized approach, extended engagement strategies, or innovative incentives to ensure their continued patronage, even after the campaign concludes.
 
-```{r}
-# EDA for smart question:What's the average time between receiving an offer and viewing it, and does this time gap affect conversion rates?
 
+```{r}
 # Load necessary libraries
 library(dplyr)
 library(ggplot2)
@@ -666,7 +645,7 @@ interactive_plot
 
 ```
 
-OBSERVATION:
+**OBSERVATION:**
 
 Average Time Between Receiving an Offer and Viewing It: The analysis of the data has shown that the average time between receiving a discount offer and viewing it is 1.98 days. This is the typical time it takes for customers to engage with the offer after receiving it.
 
@@ -674,11 +653,11 @@ Effect on Conversion Rates: Based on the scatter plot and the even scattering of
 
 In summary, the data suggests that the time gap between receiving a discount offer and viewing it does not strongly influence conversion rates, as there is no apparent pattern or trend in the scatter plot.
 
-# **EDA on Customer Data:**
+## **EDA on Customer Data:**
 
-## *What is the profile of the customer base, including their gender distribution, age distribution, and income range, and how do these factors relate to each other?*
+### Q2. What is the profile of the customer base, including their gender distribution, age distribution, and income range, and how do these factors relate to each other?
 
-### Univariate Analysis - `age`
+#### Univariate Analysis - `age`
 
 ```{r}
 # Create a side-by-side boxplot and histogram
@@ -697,13 +676,13 @@ age_sd <- sd(customers$age)
 cat("Standard Deviation of Age:", age_sd, "\n")
 ```
 
-#### **Observations:**
+**Observations:**
 
 -   The customer age range spans from 18 years as the youngest to 101 years as the oldest.
 
 -   The distribution of customer ages appears to approximate a normal distribution, with a mean and standard deviation of approximately 54 and 17, respectively.
 
-### Univariate Analysis - `gender`
+#### Univariate Analysis - `gender`
 
 ```{r}
 library(ggplot2)
@@ -740,7 +719,7 @@ pie_chart <- plot_ly(
 pie_chart
 ```
 
-#### **Observations:**
+**Observations:**
 
 -   The customer base consists of a larger proportion of males (57.2%) compared to females (41.3%), with a minor representation (1.4%) from customers identifying with other genders.
 
@@ -761,8 +740,7 @@ ggplot(data = NULL, aes(x = names(age_group_percentage), y = age_group_percentag
   coord_flip()
 ```
 
-#### Observations:
-
+**Observations:**
 -   The largest age group among customers is 56-65 years old, closely followed by the 46-55 years old group.
 
 -   The third largest age group consists of customers aged 66-75 years.
@@ -773,7 +751,7 @@ ggplot(data = NULL, aes(x = names(age_group_percentage), y = age_group_percentag
 
 -   Additionally, they typically have better mobility than those above 75 years old, making them more likely to be cafe customers.
 
-### Univariate Analysis - `income`
+#### Univariate Analysis - `income`
 
 ```{r}
 # Set up the layout with 1 row and 2 columns for the plots
@@ -826,7 +804,7 @@ text(x = bp, y = income_group_percentage + 2, labels = paste(income_group_percen
 legend("topright", legend = paste(levels(customers$income_group), " (", income_group_percentage, "%)"), fill = "skyblue", bty = "n")
 ```
 
-#### Observations:
+**Observations:**
 
 -   Customer Income Range: The income of customers spans from 30k to 120k, with an average income of 65.4k.
 
@@ -834,7 +812,7 @@ legend("topright", legend = paste(levels(customers$income_group), " (", income_g
 
 -   Resemblance to Population: The income distribution among customers closely mirrors that of the general population. However, individuals with very low income might face challenges affording frequent visits to cafes, while those with extremely high income might opt for alternative coffee enjoyment methods.
 
-### Bivariate Analysis - `age` vs `gender`
+#### Bivariate Analysis - `age` vs `gender`
 
 ```{r}
 # Load the ggplot2 library
@@ -859,7 +837,7 @@ ggplot(customers, aes(x = gender, y = age, color = gender)) +
 
 -   There is a slight correlation between age and gender, with younger customers being more likely to be female and older customers being more likely to be male.
 
-### Bivariate Analysis - `income` vs `gender`
+#### Bivariate Analysis - `income` vs `gender`
 
 ```{r}
 # Calculate the mean income for females
@@ -891,8 +869,9 @@ ggplot(customers, aes(x = gender, y = income, color = gender)) +
         axis.text.x = element_text(angle = 45, hjust = 1))
 
 ```
+Observations:
 
-#### Observations:
+-   Male customers have a right-skewed income distribution, indicating that a larger proportion of male customers falls within the lower half of the income spectrum among the company's customer base.
 
 -   Male customers have a right-skewed income distribution, indicating that a larger proportion of male customers falls within the lower half of the income spectrum among the company's customer base.
 
@@ -920,7 +899,7 @@ ggplot(summary_data, aes(x = age_group, y = mean_income, fill = age_group)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for better readability
 ```
 
-#### Observations:
+**Observations:**
 
 -   Customers in the two younger age groups (18-35 years old) have an average annual income of approximately \$51,000 USD.
 
@@ -934,7 +913,7 @@ ggplot(summary_data, aes(x = age_group, y = mean_income, fill = age_group)) +
 
 -   The use of the 2018 median income as a benchmark is justified because the dataset contains records only up to July 2018, and customer profile data, including income, is typically not frequently updated. Hence, it's more relevant to compare customer income with the population's income in the year they last became members.
 
-### `income` vs `gender` vs `age`
+#### `income` vs `gender` vs `age`
 
 ```{r}
 # Load necessary libraries
@@ -954,19 +933,19 @@ scatter_3d <- customers %>%
 scatter_3d
 ```
 
-#### **Observation:**
+**Observation:**
 
 -   Income tends to increase with age for both men and women. This is evident from the fact that the scatterplot shows a general upward trend from left to right.
 
 -   Another interesting thing we can observe is that female customers with higher incomes, on average, are older than customers in other gender groups.
 
-### Answer to SMART question based on the above analysis:
+**Answer to SMART question based on the above analysis**
 
-#### ***-\> The customer base consists of a larger proportion of males (57.2%) compared to females (41.3%), with a minor representation (1.4%) from customers identifying with other genders. The customer age range spans from 18 years as the youngest to 101 years as the oldest. The income of customers spans from 30k to 120k, with an average income of 65.4k. The income distribution closely mirrors that of the general population. There is a logical relationship between age and cafe visits, as individuals between 46 and 75 years tend to have more available time to visit cafes. The income distribution varies between genders, with females having higher average incomes.***
+The customer base consists of a larger proportion of males (57.2%) compared to females (41.3%), with a minor representation (1.4%) from customers identifying with other genders. The customer age range spans from 18 years as the youngest to 101 years as the oldest. The income of customers spans from 30k to 120k, with an average income of 65.4k. The income distribution closely mirrors that of the general population. There is a logical relationship between age and cafe visits, as individuals between 46 and 75 years tend to have more available time to visit cafes. The income distribution varies between genders, with females having higher average incomes
 
-## *How has the customer base evolved over time, both in terms of new member sign-ups and member growth, and are there any notable trends or changes?*
+#### How has the customer base evolved over time, both in terms of new member sign-ups and member growth, and are there any notable trends or changes?
 
-### Univariate Analysis - `became_member_on`
+#### Univariate Analysis - `became_member_on`
 
 ```{r}
 library(dplyr)
@@ -1100,7 +1079,7 @@ ggplot(data = df_member_growth) +
 
 ```
 
-#### Observations:
+**Observations:**
 
 -   The dataset includes customers who became members between July 2013 and July 2018.
 
@@ -1161,7 +1140,7 @@ ggplot(data = df_member, aes(x = factor(day_name, levels = c("Monday", "Tuesday"
 
 ```
 
-#### Observations:
+**Observations:**
 
 -   August, October, and December experienced the highest influx of new members, with August leading the way.
 
@@ -1171,11 +1150,55 @@ ggplot(data = df_member, aes(x = factor(day_name, levels = c("Monday", "Tuesday"
 
 -   On average, Friday had the fewest new members, making it the day with the lowest member sign-ups.
 
-### Answer to SMART question based on the above analysis:
+**Answer to SMART question based on the above analysis:**
 
-#### ***-\> The dataset includes customers who became members between July 2013 and July 2018. Daily member growth increased significantly from the middle of 2015, with a substantial spike in growth from the middle of 2017, suggesting successful campaigns during these periods. However, there was a noticeable decline in early 2018, indicating that new strategies implemented at that time may have had a negative impact on member growth. August, October, and December experienced the highest influx of new members, with weekends and Tuesdays showing higher member growth. The data indicates fluctuations in member growth over time.***
+The dataset includes customers who became members between July 2013 and July 2018. Daily member growth increased significantly from the middle of 2015, with a substantial spike in growth from the middle of 2017, suggesting successful campaigns during these periods. However, there was a noticeable decline in early 2018, indicating that new strategies implemented at that time may have had a negative impact on member growth. August, October, and December experienced the highest influx of new members, with weekends and Tuesdays showing higher member growth. The data indicates fluctuations in member growth over time.
 
-## *What are the most popular offers and the influential factors driving the View rates of the Offers?*
+## **EDA for Portfolio**
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+# Count the occurrences of each channel
+channel_counts <- df_offers %>%
+  group_by(channels) %>%
+  summarise(count = n())
+
+ggplot(channel_counts, aes(x = channels, y = count)) +
+  geom_bar(stat = "identity", fill = "#618264", color = "black", size = 0.2) +
+  labs(x = "Channels", y = "Count", title = "Promotional Channels") +
+  theme_minimal() 
+```
+
+**Observations:**  Customers received offers via a combination of four different promotion channels: social media, email, mobile apps, and websites. The 10 offers use 4 different combinations of channels. Comparisons between offers using various channels can be used to determine the promotional impact of each channel. And from the above plot, it is clearly visible that combination of all the four channels leads.
+
+```{r}
+colors <- c("#EFF6EE", "#273043", "#9197AE","darkgray")
+pie(channel_counts$count, labels = channel_counts$channels, main='Distribution of Number of Channels per Offer', col=colors)
+legend("bottomleft", legend=channel_counts$count, fill=colors, title="Occurance of Channels")
+```
+
+**Observations:**  The above observation shows that the combination of 3 channels had the maximum count per offer.
+
+```{r}
+#Offers based on difficulty and channels through which they are offered
+
+custom_colors <- c("#BF8B67", "#632626", "#9D5353", "#D0B8A8")
+
+ggplot(df_offers, aes(x = as.factor(difficulty), fill = channels)) +
+  geom_bar(position = 'stack', color = 'black', size = 0.5) +
+  scale_fill_manual(values = custom_colors) +  # Use custom colors
+  labs(y = 'Number of Offers', x = 'Difficulty of Offers', 
+       title = 'Offers based on difficulty and channels through which they are offered') +
+  theme_minimal() +  
+  theme(legend.position = "bottom")
+```
+
+**Observations:**  Difficulty refers to the minimum amount required to spend to avail an offer and the min amount requires starts from 0 till 20. The offer which came through two combination of channels had the highest amount to be spent to avail an offer with combination of 3 channels being the least.
+
+## **EDA on transcript and portfolio combined**
+### Q3. What are the most popular offers and the influential factors driving the View rates of the Offers?
 
 ```{r}
 df_offers
@@ -1336,7 +1359,7 @@ axis(2, at = seq(0, 1.2, 0.2), labels = paste0(seq(0, 1.2, 0.2) * 100, '%'))
 
 ```
 
-Observations: The results are quite intriguing. When we look at the bar plot with 10 bars, each representing a different offer, we can see that these bars can be grouped into four distinct levels of height. These four levels correspond to four specific combinations of promotion channels. This alignment is also reflected in the colors used in the plot to represent each offer.
+**Observations:** The results are quite intriguing. When we look at the bar plot with 10 bars, each representing a different offer, we can see that these bars can be grouped into four distinct levels of height. These four levels correspond to four specific combinations of promotion channels. This alignment is also reflected in the colors used in the plot to represent each offer.
 
 Group-1: (F D E B) email, mobile, social, web Group-2: (J C) email, mobile, social Group-3: (I A G) email, mobile, web Group-4: (H) email, web
 
@@ -1387,7 +1410,7 @@ legend("bottomright",
        fill = color_list1)
 ```
 
-Note: Darker shades represent BOGO (Buy One, Get One) offers, while lighter shades represent discount offers.
+**Note:** Darker shades represent BOGO (Buy One, Get One) offers, while lighter shades represent discount offers.
 
 Observations: 1. The completion rates of offers that have been viewed range from 46% to an astounding 128%. Interestingly, Offers H and A had completion rates exceeding 100%, meaning that clients completed these offers multiple times on average. 2. With the exception of Offer A, the top five offers with the greatest completion rates are all of the "discount" offer type. This shows that discounts were typically preferred by consumers over buy one, get one (BOGO) deals. From this it can be concluded that, the main factor influencing offer completion rate is the offer type, 'Discount' \> 'bogo'.
 
@@ -1434,60 +1457,19 @@ par(mfrow = c(1, 1))
 
 Observations: 1. View rate is positively correlated with reward and negatively correlated with difficulty. 2. The three numerical factors---difficulty, time, and rewards---all showed no significant correlations with the view rate.
 
-#### Answer to SMART question based on the above analysis:
+ **Answer to SMART question based on the above analysis:**
 
-***-\> 1. Popular Offers: Customers chose Offers F, E, and B as the most popular, with completion rates of 70%, 67.4%, and 56.7%, respectively. 2. Influential Factors: The choice of promotional channel had the most impact on view rates, with Social Media proving to be the most effective, followed by Email and Mobile, while the Company Website lagged behind. Which is "Social Media \> Email \>= Mobile \> Company Website" Furthermore, the type of offer was important, with 'discount' offers generating higher customer engagement than 'BOGO' promos. 3. Key Takeaways: Understanding the importance of promotional channels and offer kinds is critical for increasing view rates. Businesses can improve their promotional strategy and increase client involvement by leveraging effective channels such as Social Media and focusing on 'discount' offers.***
+1. Popular Offers: Customers chose Offers F, E, and B as the most popular, with completion rates of 70%, 67.4%, and 56.7%, respectively. 2. Influential Factors: The choice of promotional channel had the most impact on view rates, with Social Media proving to be the most effective, followed by Email and Mobile, while the Company Website lagged behind. Which is "Social Media \> Email \>= Mobile \> Company Website" Furthermore, the type of offer was important, with 'discount' offers generating higher customer engagement than 'BOGO' promos. 3. Key Takeaways: Understanding the importance of promotional channels and offer kinds is critical for increasing view rates. Businesses can improve their promotional strategy and increase client involvement by leveraging effective channels such as Social Media and focusing on 'discount' offers.
 
-## EDA for Portfolio
-
-```{r}
-library(ggplot2)
-library(dplyr)
-
-# Count the occurrences of each channel
-channel_counts <- df_offers %>%
-  group_by(channels) %>%
-  summarise(count = n())
-
-ggplot(channel_counts, aes(x = channels, y = count)) +
-  geom_bar(stat = "identity", fill = "#618264", color = "black", size = 0.2) +
-  labs(x = "Channels", y = "Count", title = "Promotional Channels") +
-  theme_minimal() 
-```
-
-OBSERVATIONS: Customers received offers via a combination of four different promotion channels: social media, email, mobile apps, and websites. The 10 offers use 4 different combinations of channels. Comparisons between offers using various channels can be used to determine the promotional impact of each channel. And from the above plot, it is clearly visible that combination of all the four channels leads.
-
-```{r}
-colors <- c("#EFF6EE", "#273043", "#9197AE","darkgray")
-pie(channel_counts$count, labels = channel_counts$channels, main='Distribution of Number of Channels per Offer', col=colors)
-legend("bottomleft", legend=channel_counts$count, fill=colors, title="Occurance of Channels")
-```
-
-OBSERVATION: The above observation shows that the combination of 3 channels had the maximum count per offer.
-
-```{r}
-#Offers based on difficulty and channels through which they are offered
-
-custom_colors <- c("#BF8B67", "#632626", "#9D5353", "#D0B8A8")
-
-ggplot(df_offers, aes(x = as.factor(difficulty), fill = channels)) +
-  geom_bar(position = 'stack', color = 'black', size = 0.5) +
-  scale_fill_manual(values = custom_colors) +  # Use custom colors
-  labs(y = 'Number of Offers', x = 'Difficulty of Offers', 
-       title = 'Offers based on difficulty and channels through which they are offered') +
-  theme_minimal() +  
-  theme(legend.position = "bottom")
-```
-
-OBSERVATION: Difficulty refers to the minimum amount required to spend to avail an offer and the min amount requires starts from 0 till 20. The offer which came through two combination of channels had the highest amount to be spent to avail an offer with combination of 3 channels being the least.
-
+## **EDA for merged dataset**
+### Q4. Which age groups are more likely to accept offers than others? Do these preferences also differ based on gender?
 ```{r}
 #Distribution of Number of Channels per Offer
 channels_count <- sapply(df_offers$channels, function(x) length(unlist(strsplit(x, ','))))
 barplot(table(channels_count), main='Distribution of Number of Channels per Offer', col='#EF9595', xlab='Number of Channels', ylab='Count')
 ```
 
-OBSERVATION: The above observation shows that the combination of 3 channels had the maximum count per offer.
+**Observations:** The above observation shows that the combination of 3 channels had the maximum count per offer.
 
 ```{r}
 colors <- c("#ad6a6c", "#d0ada7", "#e8d6cb")
@@ -1503,8 +1485,7 @@ ggplot(data = as.data.frame(offer_counts), aes(x = Var1, y = Freq)) +
   scale_fill_manual(values = colors)
 ```
 
-OBSERVATION:
-
+**Observations:** 
 From the above observation BOGO and the discount offer type has the maximum count of nearly 66,000 and 62,000 respectively while the informational offer had the least count.
 
 ```{r}
@@ -1522,7 +1503,7 @@ ggplot(counts, aes(x = offer_type, y = count, fill = event)) +
   scale_fill_manual(values = colors)  
 ```
 
-INTERPRETATIONS:
+**Observations:** 
 
 1)  BOGO offer appears to be especially successful in views and decent with the completions, indicating a strong level of customer interest.
 2)  On the other hand discount offer does attract better customers but slightly less than BOGO.
@@ -1545,7 +1526,7 @@ ggplot(age_offer_counts, aes(x = age_group, y = count, fill = offer_type)) +
     scale_fill_manual(values = colors)  
 ```
 
-OBSERVATIONS: THis plot represent the distribution of offers (BOGO, discount, and informational) across different age groups. It is clearly visible that BOGO offers is the highest across all age groups, then the discounts and informational stands at the last. This plot gives an overview of how the offers are being distributed among various age groups.
+**Observations:**  THis plot represent the distribution of offers (BOGO, discount, and informational) across different age groups. It is clearly visible that BOGO offers is the highest across all age groups, then the discounts and informational stands at the last. This plot gives an overview of how the offers are being distributed among various age groups.
 
 ```{r}
 #Offer Type Preferences by Gender
@@ -1562,7 +1543,7 @@ ggplot(offer_counts_df, aes(x = gender, y = count, fill = offer_type)) +
   theme_minimal() +scale_fill_manual(values = colors)
 ```
 
-OBSERVATIONS: This indicates the engagement patterns with different offer types such as BOGO, Discount, and Informational offers for different gender categories(Female,male, other) 1) Men show more engagement than women and other gender categories in all the three offer types(BOGO, discount, informational). 2) Women show a huge count of involvement, but are slightly behind men with no much difference. 3) Other gender categories are nearly ignorable when compared to men and women.
+**Observations:**  This indicates the engagement patterns with different offer types such as BOGO, Discount, and Informational offers for different gender categories(Female,male, other) 1) Men show more engagement than women and other gender categories in all the three offer types(BOGO, discount, informational). 2) Women show a huge count of involvement, but are slightly behind men with no much difference. 3) Other gender categories are nearly ignorable when compared to men and women.
 
 ```{r}
 # Filter data for each gender
@@ -1611,9 +1592,9 @@ ggplot(final_other, aes(x = age_group, fill = event)) +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 ```
 
-OBSERVATION: Across all age groups and gender, the most frequent event type is offer received, followed by offer viewed and offer completed. Both the male and female in the age group of 56-65 years have completed the most offers whereas the others in the range of 46-55years have completed the most offers.
+**Observations:**  Across all age groups and gender, the most frequent event type is offer received, followed by offer viewed and offer completed. Both the male and female in the age group of 56-65 years have completed the most offers whereas the others in the range of 46-55years have completed the most offers.
 
-## HYPOTHESIS TESTING(CHI SQUARE)
+# **Hypothesis Testing**
 
 ```{r}
 contingency_table <- table(final$gender, final$age_group)
@@ -1627,6 +1608,7 @@ print(chi_squared_result)
 
 **P-Value:** The p-value associated with the test statistic is less than 2.2e-16, which is essentially zero. Given the extremely low p-value (essentially zero), we can conclude that there is a significant association or relationship between the two categorical variables tested in the chi-squared test (likely "gender" and "age_group"). In other words, we reject the null hypothesis (H0) that there is no association between these variables. Therefore, there is strong evidence to suggest that "gender" and "age_group" are not independent of each other, and there is a significant relationship between them.
 
-## Which age groups are morelikely to accept offers thanothers? Do thesepreferences also differbased on gender?
+**Answer to SMART question based on the above analysis:**
 
-According to the analysis we made,BOGO is the most preferred offer across all age groups, with the age group of 56-65 having the highest offer completion rates, then age group of 46-55.When compared to the women and other gender categories, men are more engaged for all offer types while Women are slightly less than men and other gender are almost negligible. Overall, the age group 56-65 appears to be more likely to accept offers, and while gender differences in engagement exist, preferences for offer types are generally consistent across demographics, with BOGO being the most popular. \##
+According to the analysis we made,BOGO is the most preferred offer across all age groups, with the age group of 56-65 having the highest offer completion rates, then age group of 46-55.When compared to the women and other gender categories, men are more engaged for all offer types while Women are slightly less than men and other gender are almost negligible. Overall, the age group 56-65 appears to be more likely to accept offers, and while gender differences in engagement exist, preferences for offer types are generally consistent across demographics, with BOGO being the most popular.
+
