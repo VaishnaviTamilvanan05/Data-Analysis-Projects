@@ -358,10 +358,11 @@ interactive_plot <- ggplotly(hist_plot, tooltip = "count") %>%
 interactive_plot
 
 ```
-OBSERVATION:
-The above plot reveals six distinct peaks of events during the campaign, primarily associated with the reception of offers, followed by subsequent events like offer views, completions, and purchases.
 
-##*Event Occurrences Across Time - A Detailed Analysis*
+OBSERVATION: The above plot reveals six distinct peaks of events during the campaign, primarily associated with the reception of offers, followed by subsequent events like offer views, completions, and purchases.
+
+\##*Event Occurrences Across Time - A Detailed Analysis*
+
 ```{r}
 # Libraries
 library(dplyr)
@@ -391,6 +392,7 @@ cat("Number of 'offer completed' events:", nrow(completed_hourly), "\n")
 cat("Number of 'transaction' events:", nrow(transaction_hourly), "\n")
 
 ```
+
 ```{r}
 
 # Compare index values between viewed_hourly and completed_hourly
@@ -405,8 +407,8 @@ cat("Number of matches between 'completed_hourly' and 'transaction_hourly':", ma
 
 
 ```
-OBSERVATION:
-The indices of all three Series are the same, signifying the hours elapsed since the campaign began. Now we can conveniently create plots to illustrate how events are distributed over time.
+
+OBSERVATION: The indices of all three Series are the same, signifying the hours elapsed since the campaign began. Now we can conveniently create plots to illustrate how events are distributed over time.
 
 ```{r}
 
@@ -472,6 +474,7 @@ transaction_daily <- df_cust_offer %>%
   arrange(days_elapsed)
 
 ```
+
 ```{r}
 
 library(ggplot2)
@@ -672,7 +675,7 @@ Effect on Conversion Rates: Based on the scatter plot and the even scattering of
 
 In summary, the data suggests that the time gap between receiving a discount offer and viewing it does not strongly influence conversion rates, as there is no apparent pattern or trend in the scatter plot.
 
-### **EDA on Customer Data:**
+# **EDA on Customer Data:**
 
 ## *What is the profile of the customer base, including their gender distribution, age distribution, and income range, and how do these factors relate to each other?*
 
@@ -738,8 +741,9 @@ pie_chart <- plot_ly(
 pie_chart
 ```
 
-**Observations:** 
-The customer base consists of a larger proportion of males (57.2%) compared to females (41.3%), with a minor representation (1.4%) from customers identifying with other genders.
+#### **Observations:**
+
+-   The customer base consists of a larger proportion of males (57.2%) compared to females (41.3%), with a minor representation (1.4%) from customers identifying with other genders.
 
 ```{r}
 library(ggplot2)
@@ -790,7 +794,7 @@ summary(customers$income)
 
 ```
 
-#### Dividing customers into income groups
+### Dividing customers into income groups
 
 ```{r}
 # Create a new column `income_group`
@@ -848,13 +852,13 @@ ggplot(customers, aes(x = gender, y = age, color = gender)) +
         axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for better visibility
 ```
 
-**Observations:**
+#### **Observations:**
 
--   **Women are more likely to visit Starbucks than men.** This is because there are more women in the 20-30 age range, which is the most common age range for Starbucks customers.
+-   Women are more likely to visit Starbucks than men. This is because there are more women in the 20-30 age range, which is the most common age range for Starbucks customers.
 
--   **Men are more likely to visit Starbucks in their 40s and 50s, while women are more likely to visit Starbucks in their 30s and 40s.**
+-   Men are more likely to visit Starbucks in their 40s and 50s, while women are more likely to visit Starbucks in their 30s and 40s.
 
--   **There is a slight correlation between age and gender, with younger customers being more likely to be female and older customers being more likely to be male.**
+-   There is a slight correlation between age and gender, with younger customers being more likely to be female and older customers being more likely to be male.
 
 ### Bivariate Analysis - `income` vs `gender`
 
@@ -953,13 +957,13 @@ scatter_3d
 
 #### **Observation:**
 
--   **Income tends to increase with age for both men and women.** This is evident from the fact that the scatterplot shows a general upward trend from left to right.
+-   Income tends to increase with age for both men and women. This is evident from the fact that the scatterplot shows a general upward trend from left to right.
 
 -   Another interesting thing we can observe is that female customers with higher incomes, on average, are older than customers in other gender groups.
 
-#### Answer to SMART question based on the above analysis:
+### Answer to SMART question based on the above analysis:
 
-***-\>The customer base consists of a larger proportion of males (57.2%) compared to females (41.3%), with a minor representation (1.4%) from customers identifying with other genders. The customer age range spans from 18 years as the youngest to 101 years as the oldest. The income of customers spans from 30k to 120k, with an average income of 65.4k. The income distribution closely mirrors that of the general population. There is a logical relationship between age and cafe visits, as individuals between 46 and 75 years tend to have more available time to visit cafes. The income distribution varies between genders, with females having higher average incomes.***
+#### ***-\> The customer base consists of a larger proportion of males (57.2%) compared to females (41.3%), with a minor representation (1.4%) from customers identifying with other genders. The customer age range spans from 18 years as the youngest to 101 years as the oldest. The income of customers spans from 30k to 120k, with an average income of 65.4k. The income distribution closely mirrors that of the general population. There is a logical relationship between age and cafe visits, as individuals between 46 and 75 years tend to have more available time to visit cafes. The income distribution varies between genders, with females having higher average incomes.***
 
 ## *How has the customer base evolved over time, both in terms of new member sign-ups and member growth, and are there any notable trends or changes?*
 
@@ -1007,7 +1011,7 @@ ggplot(data = df_member, aes(x = year, fill = factor(year))) +
 
 ```
 
-#### Daily member growth:
+### Daily member growth:
 
 ```{r}
 # Load the required libraries if not already loaded
@@ -1107,7 +1111,7 @@ ggplot(data = df_member_growth) +
 
 -   However, in early 2018, there was a noticeable decline in daily member growth, with a 31% decrease (from 24.4 to 16.8). This drop may indicate that new strategies implemented during that time had a negative impact on member growth.
 
-#### Member growth by Month:
+### Member growth by Month:
 
 ```{r}
 # Load the ggplot2 library if not already loaded
@@ -1131,7 +1135,7 @@ ggplot(data = df_member, aes(x = month_name)) +
 
 ```
 
-#### Member growth by weekday:
+### Member growth by weekday:
 
 ```{r}
 # Load the ggplot2 library if not already loaded
@@ -1168,9 +1172,9 @@ ggplot(data = df_member, aes(x = factor(day_name, levels = c("Monday", "Tuesday"
 
 -   On average, Friday had the fewest new members, making it the day with the lowest member sign-ups.
 
-#### Answer to SMART question based on the above analysis:
+### Answer to SMART question based on the above analysis:
 
-***-\> The dataset includes customers who became members between July 2013 and July 2018. Daily member growth increased significantly from the middle of 2015, with a substantial spike in growth from the middle of 2017, suggesting successful campaigns during these periods. However, there was a noticeable decline in early 2018, indicating that new strategies implemented at that time may have had a negative impact on member growth. August, October, and December experienced the highest influx of new members, with weekends and Tuesdays showing higher member growth. The data indicates fluctuations in member growth over time.***
+#### ***-\> The dataset includes customers who became members between July 2013 and July 2018. Daily member growth increased significantly from the middle of 2015, with a substantial spike in growth from the middle of 2017, suggesting successful campaigns during these periods. However, there was a noticeable decline in early 2018, indicating that new strategies implemented at that time may have had a negative impact on member growth. August, October, and December experienced the highest influx of new members, with weekends and Tuesdays showing higher member growth. The data indicates fluctuations in member growth over time.***
 
 ## *What are the most popular offers and the influential factors driving the View rates of the Offers?*
 
@@ -1248,13 +1252,7 @@ ggplot(completion_data, aes(x = Offer, y = CompletionRate)) +
 
 Note: Offers I and J are excluded from the plot because they are informational offers and, as a result, they do not have any 'offer completed' events associated with them.
 
-Observations:
-1. With remarkable completion rates of 70%, 67.4%, and 56.7%, respectively, 
-are Offer F, Offer E, and Offer B. These incentives worked quite well to 
-motivate clients to do the related duties.
-2. Offer D, on the other hand, had the lowest completion rate of approximately 
-44%. This implies that, in comparison to the best offers, this one could not 
-have been as enticing or successful in drawing in clients.
+Observations: 1. With remarkable completion rates of 70%, 67.4%, and 56.7%, respectively, are Offer F, Offer E, and Offer B. These incentives worked quite well to motivate clients to do the related duties. 2. Offer D, on the other hand, had the lowest completion rate of approximately 44%. This implies that, in comparison to the best offers, this one could not have been as enticing or successful in drawing in clients.
 
 ```{r}
 # Filter the event_offer data frame for 'offer received' events
@@ -1284,11 +1282,8 @@ barplot(p0,
         cex.axis = 1.2)
 
 ```
-Observation: Each of the ten offers received a similar number of times, with 
-approximately 7,600 receptions for each offer. The distribution of offer 
-receptions was consistent, indicating that there was no significant discrepancy 
-in how often different offers were received by customers.
 
+Observation: Each of the ten offers received a similar number of times, with approximately 7,600 receptions for each offer. The distribution of offer receptions was consistent, indicating that there was no significant discrepancy in how often different offers were received by customers.
 
 ```{r}
 # Number of offers
@@ -1342,36 +1337,15 @@ axis(2, at = seq(0, 1.2, 0.2), labels = paste0(seq(0, 1.2, 0.2) * 100, '%'))
 
 ```
 
-Observations: The results are quite intriguing. When we look at the bar plot 
-with 10 bars, each representing a different offer, we can see that these bars 
-can be grouped into four distinct levels of height. These four levels 
-correspond to four specific combinations of promotion channels. This alignment 
-is also reflected in the colors used in the plot to represent each offer.
+Observations: The results are quite intriguing. When we look at the bar plot with 10 bars, each representing a different offer, we can see that these bars can be grouped into four distinct levels of height. These four levels correspond to four specific combinations of promotion channels. This alignment is also reflected in the colors used in the plot to represent each offer.
 
-Group-1: (F D E B) email, mobile, social, web 
-Group-2: (J C) email, mobile, social 
-Group-3: (I A G) email, mobile, web 
-Group-4: (H) email, web
+Group-1: (F D E B) email, mobile, social, web Group-2: (J C) email, mobile, social Group-3: (I A G) email, mobile, web Group-4: (H) email, web
 
-Conclusions: 
+Conclusions:
 
-The study draws attention to how different promotion channels differ in their 
-efficacy: 
-1. Web-based offers (Group 1) have a little greater view rate than 
-Group 2, but their overall contribution is minimal when compared to Group 2. 
-2. Group 2, which consists of advertisements on social media, is notable for 
-having a much greater view rate. Offers from social media platforms 
-significantly affect the view rate. 3. Group 3, which features promotions for 
-mobile apps, likewise does well and has a higher view rate. 4. Group 4, which 
-is dominated by email and has a little web component, lessens the impact of 
-web-based offers. Email promotions have a significant and marginally better 
-influence on view rates than mobile promotions, as evidenced by the fact that 
-the majority of offers in Group 4 are viewed via email.
+The study draws attention to how different promotion channels differ in their efficacy: 1. Web-based offers (Group 1) have a little greater view rate than Group 2, but their overall contribution is minimal when compared to Group 2. 2. Group 2, which consists of advertisements on social media, is notable for having a much greater view rate. Offers from social media platforms significantly affect the view rate. 3. Group 3, which features promotions for mobile apps, likewise does well and has a higher view rate. 4. Group 4, which is dominated by email and has a little web component, lessens the impact of web-based offers. Email promotions have a significant and marginally better influence on view rates than mobile promotions, as evidenced by the fact that the majority of offers in Group 4 are viewed via email.
 
-To sum up, the offer view rate was influenced by all promotion channels, 
-however their relative importance differed. In terms of relevance, social 
-media was the most influential, followed by websites, email, smartphones, and 
-so on.
+To sum up, the offer view rate was influenced by all promotion channels, however their relative importance differed. In terms of relevance, social media was the most influential, followed by websites, email, smartphones, and so on.
 
 ```{r}
 # Filter the dataframe for completed offers
@@ -1414,24 +1388,11 @@ legend("bottomright",
        fill = color_list1)
 ```
 
-Note: 
-Darker shades represent BOGO (Buy One, Get One) offers, while lighter shades 
-represent discount offers.
+Note: Darker shades represent BOGO (Buy One, Get One) offers, while lighter shades represent discount offers.
 
-Observations: 
-1. The completion rates of offers that have been viewed range from 46% to an 
-astounding 128%. Interestingly, Offers H and A had completion rates exceeding 
-100%, meaning that clients completed these offers multiple times on average.
-2. With the exception of Offer A, the top five offers with the greatest 
-completion rates are all of the "discount" offer type. This shows that 
-discounts were typically preferred by consumers over buy one, get one (BOGO) 
-deals. From this it can be concluded that, the main factor influencing offer 
-completion rate is the offer type, 'Discount' > 'bogo'.
+Observations: 1. The completion rates of offers that have been viewed range from 46% to an astounding 128%. Interestingly, Offers H and A had completion rates exceeding 100%, meaning that clients completed these offers multiple times on average. 2. With the exception of Offer A, the top five offers with the greatest completion rates are all of the "discount" offer type. This shows that discounts were typically preferred by consumers over buy one, get one (BOGO) deals. From this it can be concluded that, the main factor influencing offer completion rate is the offer type, 'Discount' \> 'bogo'.
 
-Conclusion: 
-It's important to remember that strong completion rates do not always translate 
-into high view rates for an offer. In actuality, there was an almost inverse 
-correlation between completion and view rates.
+Conclusion: It's important to remember that strong completion rates do not always translate into high view rates for an offer. In actuality, there was an almost inverse correlation between completion and view rates.
 
 ```{r}
 # Load necessary libraries if not already loaded
@@ -1471,26 +1432,12 @@ corrplot(correlation_matrix_view, method = "color", col = colorRampPalette(c("#9
 # Reset the layout to its default value
 par(mfrow = c(1, 1))
 ```
-Observations: 
-1. View rate is positively correlated with reward and negatively correlated 
-with difficulty.
-2. The three numerical factors—difficulty, time, and rewards—all showed 
-no significant correlations with the view rate.
+
+Observations: 1. View rate is positively correlated with reward and negatively correlated with difficulty. 2. The three numerical factors---difficulty, time, and rewards---all showed no significant correlations with the view rate.
 
 #### Answer to SMART question based on the above analysis:
 
-***-\> 1. Popular Offers: Customers chose Offers F, E, and B as the most 
-popular, with completion rates of 70%, 67.4%, and 56.7%, respectively.
-2. Influential Factors: The choice of promotional channel had the most impact 
-on view rates, with Social Media proving to be the most effective, followed by 
-Email and Mobile, while the Company Website lagged behind. Which is 
-"Social Media > Email >= Mobile > Company Website" 
-Furthermore, the type of offer was important, with 'discount' offers generating 
-higher customer engagement than 'BOGO' promos.
-3. Key Takeaways: Understanding the importance of promotional channels and 
-offer kinds is critical for increasing view rates. Businesses can improve their 
-promotional strategy and increase client involvement by leveraging effective 
-channels such as Social Media and focusing on 'discount' offers.***
+***-\> 1. Popular Offers: Customers chose Offers F, E, and B as the most popular, with completion rates of 70%, 67.4%, and 56.7%, respectively. 2. Influential Factors: The choice of promotional channel had the most impact on view rates, with Social Media proving to be the most effective, followed by Email and Mobile, while the Company Website lagged behind. Which is "Social Media \> Email \>= Mobile \> Company Website" Furthermore, the type of offer was important, with 'discount' offers generating higher customer engagement than 'BOGO' promos. 3. Key Takeaways: Understanding the importance of promotional channels and offer kinds is critical for increasing view rates. Businesses can improve their promotional strategy and increase client involvement by leveraging effective channels such as Social Media and focusing on 'discount' offers.***
 
 ## EDA for Portfolio
 
@@ -1532,8 +1479,8 @@ ggplot(df_offers, aes(x = as.factor(difficulty), fill = channels)) +
   theme_minimal() +  
   theme(legend.position = "bottom")
 ```
-OBSERVATION:
-Difficulty refers to the minimum amount required to spend to avail an offer and the min amount requires starts from 0 till 20. The offer which came through two combination of channels had the highest amount to be spent to avail an offer with combination of 3 channels being the least. 
+
+OBSERVATION: Difficulty refers to the minimum amount required to spend to avail an offer and the min amount requires starts from 0 till 20. The offer which came through two combination of channels had the highest amount to be spent to avail an offer with combination of 3 channels being the least.
 
 ```{r}
 #Distribution of Number of Channels per Offer
@@ -1575,6 +1522,7 @@ ggplot(counts, aes(x = offer_type, y = count, fill = event)) +
        y = "Count") +
   scale_fill_manual(values = colors)  
 ```
+
 INTERPRETATIONS:
 
 1)  BOGO offer appears to be especially successful in views and decent with the completions, indicating a strong level of customer interest.
@@ -1615,10 +1563,7 @@ ggplot(offer_counts_df, aes(x = gender, y = count, fill = offer_type)) +
   theme_minimal() +scale_fill_manual(values = colors)
 ```
 
-OBSERVATIONS: This indicates the engagement patterns with different offer types such as BOGO, Discount, and Informational offers for different gender categories(Female,male, other)
-1)  Men show more engagement than women and other gender categories in all the three offer types(BOGO, discount, informational).
-2)  Women show a huge count of involvement, but are slightly behind men with no much difference.
-3)  Other gender categories are nearly ignorable when compared to men and women.
+OBSERVATIONS: This indicates the engagement patterns with different offer types such as BOGO, Discount, and Informational offers for different gender categories(Female,male, other) 1) Men show more engagement than women and other gender categories in all the three offer types(BOGO, discount, informational). 2) Women show a huge count of involvement, but are slightly behind men with no much difference. 3) Other gender categories are nearly ignorable when compared to men and women.
 
 ```{r}
 # Filter data for each gender
@@ -1666,8 +1611,8 @@ ggplot(final_other, aes(x = age_group, fill = event)) +
   theme_minimal() +scale_fill_manual(values = colors)+
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 ```
-OBSERVATION:
-Across all age groups and gender, the most frequent event type is offer received, followed by offer viewed and offer completed. Both the male and female in the age group of 56-65 years have completed the most offers whereas the others in the range of 46-55years have completed the most offers.
+
+OBSERVATION: Across all age groups and gender, the most frequent event type is offer received, followed by offer viewed and offer completed. Both the male and female in the age group of 56-65 years have completed the most offers whereas the others in the range of 46-55years have completed the most offers.
 
 ## HYPOTHESIS TESTING(CHI SQUARE)
 
@@ -1685,5 +1630,4 @@ print(chi_squared_result)
 
 ## Which age groups are morelikely to accept offers thanothers? Do thesepreferences also differbased on gender?
 
-According to the analysis we made,BOGO is the most preferred offer across all age groups, with the age group of 56-65 having the highest offer completion rates, then age group of 46-55.When compared to the women and other gender categories, men are more engaged for all offer types while Women are slightly less than men and other gender are almost negligible. Overall, the age group 56-65 appears to be more likely to accept offers, and while gender differences in engagement exist, preferences for offer types are generally consistent across demographics, with BOGO being the most popular.
-##
+According to the analysis we made,BOGO is the most preferred offer across all age groups, with the age group of 56-65 having the highest offer completion rates, then age group of 46-55.When compared to the women and other gender categories, men are more engaged for all offer types while Women are slightly less than men and other gender are almost negligible. Overall, the age group 56-65 appears to be more likely to accept offers, and while gender differences in engagement exist, preferences for offer types are generally consistent across demographics, with BOGO being the most popular. \##
