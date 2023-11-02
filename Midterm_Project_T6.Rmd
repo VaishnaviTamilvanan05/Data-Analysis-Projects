@@ -3,12 +3,9 @@ title: "Data Brew: Brewing Success with Starbucks Customer Insights"
 subtitle: "TEAM 6 - Chekitha Swayampu, Hrushikesh Sai Seshagiri Chowdary Uppalapati, Swathi Murali Srinivasan, Vaishnavi Tamilvanan"
 date: "2023-10-20"
 output:
-  html_document:
-    code_folding: hide
-    number_sections: false
-    toc: yes
-    toc_depth: 3
-    toc_float: yes
+  prettydoc::html_pretty:
+    theme: hpstr
+    toc: true
   pdf_document:
     toc: yes
     toc_depth: 3
@@ -774,7 +771,7 @@ summary(customers$income)
 
 ```
 
-#### Dividing customers into income groups
+### Dividing customers into income groups
 
 ```{r}
 # Create a new column `income_group`
@@ -832,7 +829,7 @@ ggplot(customers, aes(x = gender, y = age, color = gender)) +
         axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for better visibility
 ```
 
-**Observations:**
+#### **Observations:**
 
 -   Women are more likely to visit Starbucks than men. This is because there are more women in the 20-30 age range, which is the most common age range for Starbucks customers.
 
@@ -876,11 +873,13 @@ Observations:
 
 -   Male customers have a right-skewed income distribution, indicating that a larger proportion of male customers falls within the lower half of the income spectrum among the company's customer base.
 
+-   Male customers have a right-skewed income distribution, indicating that a larger proportion of male customers falls within the lower half of the income spectrum among the company's customer base.
+
 -   Female customers have a significantly higher average income compared to customers of other genders. This disparity in income may be attributed to the assumption that female customers, on average, are older than customers in other gender groups.
 
 -   On average, female customers have an income of \$71,000, while male customers have an average income of \$61,000. Customers of other genders have an average income of \$63,000.
 
-#### Bivariate Analysis - `income` vs `age`
+### Bivariate Analysis - `income` vs `age`
 
 ```{r}
 # Load required libraries
@@ -990,7 +989,7 @@ ggplot(data = df_member, aes(x = year, fill = factor(year))) +
 
 ```
 
-#### Daily member growth:
+### Daily member growth:
 
 ```{r}
 # Load the required libraries if not already loaded
@@ -1090,7 +1089,7 @@ ggplot(data = df_member_growth) +
 
 -   However, in early 2018, there was a noticeable decline in daily member growth, with a 31% decrease (from 24.4 to 16.8). This drop may indicate that new strategies implemented during that time had a negative impact on member growth.
 
-#### Member growth by Month:
+### Member growth by Month:
 
 ```{r}
 # Load the ggplot2 library if not already loaded
@@ -1114,7 +1113,7 @@ ggplot(data = df_member, aes(x = month_name)) +
 
 ```
 
-#### Member growth by weekday:
+### Member growth by weekday:
 
 ```{r}
 # Load the ggplot2 library if not already loaded
@@ -1611,6 +1610,5 @@ print(chi_squared_result)
 
 **Answer to SMART question based on the above analysis:**
 
-According to the analysis we made,BOGO is the most preferred offer across all age groups, with the age group of 56-65 having the highest offer completion rates, then age group of 46-55.When compared to the women and other gender categories, men are more engaged for all offer types while Women are slightly less than men and other gender are almost negligible. Overall, the age group 56-65 appears to be more likely to accept offers, and while gender differences in engagement exist, preferences for offer types are generally consistent across demographics, with BOGO being the most popular. 
-
+According to the analysis we made,BOGO is the most preferred offer across all age groups, with the age group of 56-65 having the highest offer completion rates, then age group of 46-55.When compared to the women and other gender categories, men are more engaged for all offer types while Women are slightly less than men and other gender are almost negligible. Overall, the age group 56-65 appears to be more likely to accept offers, and while gender differences in engagement exist, preferences for offer types are generally consistent across demographics, with BOGO being the most popular.
 
