@@ -15,7 +15,6 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
 ```{r, results='markup'}
 # Importing and reading the Datasets 
 df_cust_offer<-read.csv("data/transcript.csv")
@@ -227,10 +226,10 @@ var_df <- data.frame(Numeric = numerical_colnames, Categorical = categorical_col
 
 print(head(var_df))
 ```
-# **EDA and SMART questions**
-## **EDA on transcripts data:**
 
-### Q1. What's the average time between receiving an offer and viewing it, and does this time gap affect conversion rates?
+# **EDA and SMART questions**
+
+## **EDA on transcripts data:**
 
 ```{r}
 library(ezids)
@@ -274,7 +273,7 @@ interactive_plot <- ggplotly(p)
 interactive_plot
 ```
 
-**OBSERVATION:** 
+**OBSERVATION:**
 
 1.  The dataset contains 138,953 transactions, which is more than four times the number of completed offers. This suggests that many customers made multiple purchases without the influence of an offer. This indicates a high level of customer loyalty, which is expected, given that Starbucks primarily offers fast-moving consumer goods such as coffee and food.
 
@@ -501,11 +500,11 @@ p_hours <- ggplot(combined_data_hours, aes(x = hours_elapsed)) +
 grid.arrange(p_days, p_hours, ncol = 2)
 ```
 
-**OBSERVATION:** 
+**OBSERVATION:**
 
 The stacked plot clearly illustrates a robust correlation between individuals viewing offers and subsequently using them. In most cases, when a person viewed an offer, they promptly took action, often within a few hours of seeing it. This pattern remained consistent when we examined the data on a daily basis, indicating that a significant number of customers not only engaged with the offer but also completed the offer on the very same day they encountered it.
 
-### How do different promotional events (received, viewed, completed) affect customer retention and repeat business with Starbucks over time?
+### Q1: How do different promotional events (received, viewed, completed) affect customer retention and repeat business with Starbucks over time?
 
 ```{r}
 # Load necessary libraries
@@ -581,7 +580,6 @@ The initial graph reveals a consistent upward trend in customer retention rates 
 The second graph depicts a similar positive trend in customer retention rates over time, but this time among customers who have made multiple purchases using the offer. This is particularly encouraging for Starbucks, as it demonstrates a loyal customer base that consistently appreciates and benefits from the offers. It also indicates a level of trust and satisfaction among these customers, making them valuable assets to the business.
 
 However, it's important to note that this exploratory data analysis (EDA) focuses solely on the duration of the campaign. To maximize long-term customer retention, Starbucks should consider tailoring their offers to specifically target customers who are less likely to return in the future. Identifying and addressing the needs and preferences of this group may involve a more personalized approach, extended engagement strategies, or innovative incentives to ensure their continued patronage, even after the campaign concludes.
-
 
 ```{r}
 # Load necessary libraries
@@ -740,8 +738,7 @@ ggplot(data = NULL, aes(x = names(age_group_percentage), y = age_group_percentag
   coord_flip()
 ```
 
-**Observations:**
--   The largest age group among customers is 56-65 years old, closely followed by the 46-55 years old group.
+**Observations:** - The largest age group among customers is 56-65 years old, closely followed by the 46-55 years old group.
 
 -   The third largest age group consists of customers aged 66-75 years.
 
@@ -869,6 +866,7 @@ ggplot(customers, aes(x = gender, y = income, color = gender)) +
         axis.text.x = element_text(angle = 45, hjust = 1))
 
 ```
+
 Observations:
 
 -   Male customers have a right-skewed income distribution, indicating that a larger proportion of male customers falls within the lower half of the income spectrum among the company's customer base.
@@ -1171,7 +1169,7 @@ ggplot(channel_counts, aes(x = channels, y = count)) +
   theme_minimal() 
 ```
 
-**Observations:**  Customers received offers via a combination of four different promotion channels: social media, email, mobile apps, and websites. The 10 offers use 4 different combinations of channels. Comparisons between offers using various channels can be used to determine the promotional impact of each channel. And from the above plot, it is clearly visible that combination of all the four channels leads.
+**Observations:** Customers received offers via a combination of four different promotion channels: social media, email, mobile apps, and websites. The 10 offers use 4 different combinations of channels. Comparisons between offers using various channels can be used to determine the promotional impact of each channel. And from the above plot, it is clearly visible that combination of all the four channels leads.
 
 ```{r}
 colors <- c("#EFF6EE", "#273043", "#9197AE","darkgray")
@@ -1179,7 +1177,7 @@ pie(channel_counts$count, labels = channel_counts$channels, main='Distribution o
 legend("bottomleft", legend=channel_counts$count, fill=colors, title="Occurance of Channels")
 ```
 
-**Observations:**  The above observation shows that the combination of 3 channels had the maximum count per offer.
+**Observations:** The above observation shows that the combination of 3 channels had the maximum count per offer.
 
 ```{r}
 #Offers based on difficulty and channels through which they are offered
@@ -1195,9 +1193,10 @@ ggplot(df_offers, aes(x = as.factor(difficulty), fill = channels)) +
   theme(legend.position = "bottom")
 ```
 
-**Observations:**  Difficulty refers to the minimum amount required to spend to avail an offer and the min amount requires starts from 0 till 20. The offer which came through two combination of channels had the highest amount to be spent to avail an offer with combination of 3 channels being the least.
+**Observations:** Difficulty refers to the minimum amount required to spend to avail an offer and the min amount requires starts from 0 till 20. The offer which came through two combination of channels had the highest amount to be spent to avail an offer with combination of 3 channels being the least.
 
 ## **EDA on transcript and portfolio combined**
+
 ### Q3. What are the most popular offers and the influential factors driving the View rates of the Offers?
 
 ```{r}
@@ -1457,12 +1456,14 @@ par(mfrow = c(1, 1))
 
 Observations: 1. View rate is positively correlated with reward and negatively correlated with difficulty. 2. The three numerical factors---difficulty, time, and rewards---all showed no significant correlations with the view rate.
 
- **Answer to SMART question based on the above analysis:**
+**Answer to SMART question based on the above analysis:**
 
-1. Popular Offers: Customers chose Offers F, E, and B as the most popular, with completion rates of 70%, 67.4%, and 56.7%, respectively. 2. Influential Factors: The choice of promotional channel had the most impact on view rates, with Social Media proving to be the most effective, followed by Email and Mobile, while the Company Website lagged behind. Which is "Social Media \> Email \>= Mobile \> Company Website" Furthermore, the type of offer was important, with 'discount' offers generating higher customer engagement than 'BOGO' promos. 3. Key Takeaways: Understanding the importance of promotional channels and offer kinds is critical for increasing view rates. Businesses can improve their promotional strategy and increase client involvement by leveraging effective channels such as Social Media and focusing on 'discount' offers.
+1.  Popular Offers: Customers chose Offers F, E, and B as the most popular, with completion rates of 70%, 67.4%, and 56.7%, respectively. 2. Influential Factors: The choice of promotional channel had the most impact on view rates, with Social Media proving to be the most effective, followed by Email and Mobile, while the Company Website lagged behind. Which is "Social Media \> Email \>= Mobile \> Company Website" Furthermore, the type of offer was important, with 'discount' offers generating higher customer engagement than 'BOGO' promos. 3. Key Takeaways: Understanding the importance of promotional channels and offer kinds is critical for increasing view rates. Businesses can improve their promotional strategy and increase client involvement by leveraging effective channels such as Social Media and focusing on 'discount' offers.
 
 ## **EDA for merged dataset**
+
 ### Q4. Which age groups are more likely to accept offers than others? Do these preferences also differ based on gender?
+
 ```{r}
 #Distribution of Number of Channels per Offer
 channels_count <- sapply(df_offers$channels, function(x) length(unlist(strsplit(x, ','))))
@@ -1485,8 +1486,7 @@ ggplot(data = as.data.frame(offer_counts), aes(x = Var1, y = Freq)) +
   scale_fill_manual(values = colors)
 ```
 
-**Observations:** 
-From the above observation BOGO and the discount offer type has the maximum count of nearly 66,000 and 62,000 respectively while the informational offer had the least count.
+**Observations:** From the above observation BOGO and the discount offer type has the maximum count of nearly 66,000 and 62,000 respectively while the informational offer had the least count.
 
 ```{r}
 # Summarize the data to get counts
@@ -1503,7 +1503,7 @@ ggplot(counts, aes(x = offer_type, y = count, fill = event)) +
   scale_fill_manual(values = colors)  
 ```
 
-**Observations:** 
+**Observations:**
 
 1)  BOGO offer appears to be especially successful in views and decent with the completions, indicating a strong level of customer interest.
 2)  On the other hand discount offer does attract better customers but slightly less than BOGO.
@@ -1526,7 +1526,7 @@ ggplot(age_offer_counts, aes(x = age_group, y = count, fill = offer_type)) +
     scale_fill_manual(values = colors)  
 ```
 
-**Observations:**  THis plot represent the distribution of offers (BOGO, discount, and informational) across different age groups. It is clearly visible that BOGO offers is the highest across all age groups, then the discounts and informational stands at the last. This plot gives an overview of how the offers are being distributed among various age groups.
+**Observations:** THis plot represent the distribution of offers (BOGO, discount, and informational) across different age groups. It is clearly visible that BOGO offers is the highest across all age groups, then the discounts and informational stands at the last. This plot gives an overview of how the offers are being distributed among various age groups.
 
 ```{r}
 #Offer Type Preferences by Gender
@@ -1543,7 +1543,7 @@ ggplot(offer_counts_df, aes(x = gender, y = count, fill = offer_type)) +
   theme_minimal() +scale_fill_manual(values = colors)
 ```
 
-**Observations:**  This indicates the engagement patterns with different offer types such as BOGO, Discount, and Informational offers for different gender categories(Female,male, other) 1) Men show more engagement than women and other gender categories in all the three offer types(BOGO, discount, informational). 2) Women show a huge count of involvement, but are slightly behind men with no much difference. 3) Other gender categories are nearly ignorable when compared to men and women.
+**Observations:** This indicates the engagement patterns with different offer types such as BOGO, Discount, and Informational offers for different gender categories(Female,male, other) 1) Men show more engagement than women and other gender categories in all the three offer types(BOGO, discount, informational). 2) Women show a huge count of involvement, but are slightly behind men with no much difference. 3) Other gender categories are nearly ignorable when compared to men and women.
 
 ```{r}
 # Filter data for each gender
@@ -1592,7 +1592,7 @@ ggplot(final_other, aes(x = age_group, fill = event)) +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
 ```
 
-**Observations:**  Across all age groups and gender, the most frequent event type is offer received, followed by offer viewed and offer completed. Both the male and female in the age group of 56-65 years have completed the most offers whereas the others in the range of 46-55years have completed the most offers.
+**Observations:** Across all age groups and gender, the most frequent event type is offer received, followed by offer viewed and offer completed. Both the male and female in the age group of 56-65 years have completed the most offers whereas the others in the range of 46-55years have completed the most offers.
 
 # **Hypothesis Testing**
 
@@ -1611,4 +1611,3 @@ print(chi_squared_result)
 **Answer to SMART question based on the above analysis:**
 
 According to the analysis we made,BOGO is the most preferred offer across all age groups, with the age group of 56-65 having the highest offer completion rates, then age group of 46-55.When compared to the women and other gender categories, men are more engaged for all offer types while Women are slightly less than men and other gender are almost negligible. Overall, the age group 56-65 appears to be more likely to accept offers, and while gender differences in engagement exist, preferences for offer types are generally consistent across demographics, with BOGO being the most popular.
-
