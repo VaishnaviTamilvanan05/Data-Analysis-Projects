@@ -21,7 +21,7 @@ library(jsonlite)
 library(dplyr)
 
 # Load data
-portfolio <- read.csv("data/portfolio.csv", row.names = 1)
+portfolio_orig <- read.csv("data/portfolio.csv", row.names = 1)
 profile <- read.csv("data/profile.csv", row.names = 1)
 transcript <- read.csv("data/transcript.csv", row.names = 1)
 
@@ -31,13 +31,13 @@ transcript <- read.csv("data/transcript.csv", row.names = 1)
 
 ```{r}
 # Print the dimensions (shape) of the 'portfolio' data frame
-cat("Dimensions of 'portfolio':", nrow(portfolio), "rows and", ncol(portfolio), "columns\n")
+cat("Dimensions of 'portfolio_orig':", nrow(portfolio_orig), "rows and", ncol(portfolio_orig), "columns\n")
 
 # Display the first few rows of the 'portfolio' data frame
-head(portfolio)
+head(portfolio_orig)
 ```
 ```{r}
-portfolio['channels']
+portfolio_orig['channels']
 ```
 
 ```{r}
@@ -57,7 +57,7 @@ head(transcript)
 
 ```{r}
 # Rename the id columns for ease of understanding
-#portfolio$offer_id <- portfolio$id
+#portfolio_orig$offer_id <- portfolio_orig$id
 #portfolio_orig <- subset(portfolio, select = -id)
 
 #profile$customer_id <- profile$id
@@ -71,26 +71,26 @@ head(transcript)
 portfolio_orig
 ```
 ```{r}
-library(tidyverse)
-library(stringr)
+#library(tidyverse)
+#library(stringr)
 
 # Create binary columns for each channel
-channels <- unique(unlist(str_split(portfolio_orig$channels, ",")))
-for (channel in channels) {
-  col_name <- paste0("channel_", gsub("[[:space:]]|[[:punct:]]", "_", channel))
-  portfolio[col_name] <- as.integer(str_detect(portfolio_orig$channels, fixed(channel)))
-}
+#channels <- unique(unlist(str_split(portfolio_orig$channels, ",")))
+#for (channel in channels) {
+  #col_name <- paste0("channel_", gsub("[[:space:]]|[[:punct:]]", "_", channel))
+  #portfolio[col_name] <- as.integer(str_detect(portfolio_orig$channels, fixed(channel)))
+#}
 
 # Create binary columns for each offer type
-offer_types <- unique(portfolio_orig$offer_type)
-for (offer_type in offer_types) {
-  col_name <- paste0("offer_type_", gsub("[[:space:]]|[[:punct:]]", "_", offer_type))
-  portfolio[col_name] <- as.integer(portfolio_orig$offer_type == offer_type)
-}
+#offer_types <- unique(portfolio_orig$offer_type)
+#for (offer_type in offer_types) {
+  #col_name <- paste0("offer_type_", gsub("[[:space:]]|[[:punct:]]", "_", offer_type))
+  #portfolio[col_name] <- as.integer(portfolio_orig$offer_type == offer_type)
+#}
 
 # Print portfolio
-print(portfolio)
-print(colnames(portfolio))
+#print(portfolio)
+#print(colnames(portfolio))
 ```
 
 ```{r}
@@ -113,7 +113,7 @@ print(portfolio_df_new)
 ```
 
 ```{r}
-length(unique(portfolio$id)) == nrow(portfolio)
+#length(unique(portfolio$id)) == nrow(portfolio)
 ```
 ```{r}
 head(transcript)
