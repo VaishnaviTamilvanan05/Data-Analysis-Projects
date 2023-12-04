@@ -263,7 +263,7 @@ title('Income Distribution vs. Gender', xlab = 'Gender', ylab = 'Income')
 
 ```
 
-#Customer Sign Ups
+## Customer Sign Ups
 Exploring the registration patterns of customers proves intriguing. Notably, three distinct periods stand out, marked by substantial surges in customer registrations, followed by relatively stable trends. Noteworthy is a significant decline, particularly evident at the commencement of 2018, adding an interesting dimension to the analysis.
 
 ```{r}
@@ -332,7 +332,7 @@ ggplot(membership_subs, aes(x = member_month, y = count, color = factor(member_y
   scale_y_continuous(breaks = seq(0, max(membership_subs$count), by = 200), limits = c(0, max(membership_subs$count) + 200))
 
 ```
-# Customer Transactions
+## Customer Transactions
 
 The walkthrough of the customer transactions table pursued diverse directions. Two distinct types of 'value_types' were explored: 'amount,' representing the purchase amount for a specific transaction, and 'offer id,' signifying the offer that occurred. The 'offer id' can progress through various stages, including 'offer received,' 'offer reviewed,' and 'offer completed.' The dual nature of 'value_types' introduces complexity to the analysis, involving both transaction amounts and the lifecycle of promotional offers.
 
