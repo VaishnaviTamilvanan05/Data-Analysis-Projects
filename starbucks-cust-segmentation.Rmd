@@ -1,0 +1,189 @@
+---
+title: "Data Brew: Brewing Success with Starbucks Customer Insights"
+subtitle: "TEAM 6 - Chekitha Swayampu, Hrushikesh Sai Seshagiri Chowdary Uppalapati, Swathi Murali Srinivasan, Vaishnavi Tamilvanan"
+date: "2023-10-20"
+output:
+  prettydoc::html_pretty:
+    theme: hpstr
+    toc: true
+  pdf_document:
+    toc: yes
+    toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, results='markup'}
+# Load required libraries
+library(jsonlite)
+library(dplyr)
+
+# Load data
+portfolio <- read.csv("data/portfolio.csv", row.names = 1)
+profile <- read.csv("data/profile.csv", row.names = 1)
+transcript <- read.csv("data/transcript.csv", row.names = 1)
+
+#profile <- stream_in(file("data_json/profile.json"))
+#transcript <- stream_in(file("data_json/transcript.json"))
+```
+
+```{r}
+# Print the dimensions (shape) of the 'portfolio' data frame
+cat("Dimensions of 'portfolio':", nrow(portfolio), "rows and", ncol(portfolio), "columns\n")
+
+# Display the first few rows of the 'portfolio' data frame
+head(portfolio)
+```
+```{r}
+portfolio['channels']
+```
+
+```{r}
+# Print the dimensions (shape) of the 'portfolio' data frame
+cat("Dimensions of 'profile':", nrow(profile), "rows and", ncol(profile), "columns\n")
+
+# Display the first few rows of the 'portfolio' data frame
+head(profile)
+```
+```{r}
+# Print the dimensions (shape) of the 'portfolio' data frame
+cat("Dimensions of 'profile':", nrow(transcript), "rows and", ncol(transcript), "columns\n")
+
+# Display the first few rows of the 'portfolio' data frame
+head(transcript)
+```
+
+```{r}
+# Rename the id columns for ease of understanding
+#portfolio$offer_id <- portfolio$id
+#portfolio_orig <- subset(portfolio, select = -id)
+
+#profile$customer_id <- profile$id
+#profile <- subset(profile, select = -id)
+
+#transcript$customer_id <- transcript$person
+#transcript <- subset(transcript, select = -person)
+```
+
+```{r}
+portfolio_orig
+```
+```{r}
+library(tidyverse)
+library(stringr)
+
+# Create binary columns for each channel
+channels <- unique(unlist(str_split(portfolio_orig$channels, ",")))
+for (channel in channels) {
+  col_name <- paste0("channel_", gsub("[[:space:]]|[[:punct:]]", "_", channel))
+  portfolio[col_name] <- as.integer(str_detect(portfolio_orig$channels, fixed(channel)))
+}
+
+# Create binary columns for each offer type
+offer_types <- unique(portfolio_orig$offer_type)
+for (offer_type in offer_types) {
+  col_name <- paste0("offer_type_", gsub("[[:space:]]|[[:punct:]]", "_", offer_type))
+  portfolio[col_name] <- as.integer(portfolio_orig$offer_type == offer_type)
+}
+
+# Print portfolio
+print(portfolio)
+print(colnames(portfolio))
+```
+
+```{r}
+# Additional columns
+additional_columns <- tibble(
+  email = c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+  mobile = c(1, 1, 1, 1, 0, 1, 1, 1, 1, 1),
+  social = c(1, 1, 0, 0, 0, 1, 1, 1, 1, 0),
+  web = c(0, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+  bogo = c(1, 1, 0, 1, 0, 0, 0, 0, 1, 0),
+  discount = c(0, 0, 0, 0, 1, 1, 1, 0, 0, 1),
+  informational = c(0, 0, 1, 0, 0, 0, 0, 1, 0, 0)
+)
+
+# Add additional columns to the original portfolio DataFrame
+portfolio_df_new <- cbind(portfolio_orig, additional_columns)
+
+# Print updated portfolio DataFrame
+print(portfolio_df_new)
+```
+
+```{r}
+length(unique(portfolio$id)) == nrow(portfolio)
+```
+```{r}
+head(transcript)
+```
+
+Transcript cleanup:
+
+```{r}
+# Assuming 'transcript' is a data frame in R
+library(dplyr)
+library(tidyr)
+library(jsonlite)
+
+# Convert strings to lists in 'value' column
+transcript$value <- lapply(transcript$value, function(x) try(fromJSON(gsub("'", "\"", x)), silent = TRUE))
+
+transcript <- mutate(transcript,
+                     value_type = sapply(value, function(x) ifelse(!inherits(x, "try-error") && length(x) > 0, names(x), NA)),
+                     value = sapply(value, function(x) ifelse(!inherits(x, "try-error") && length(x) > 0, x[[1]], NA))
+)
+
+# Make sure 'time' is an integer
+transcript$time <- as.integer(transcript$time)
+
+# Print the first few rows of the updated 'transcript' data frame
+head(transcript)
+tail(transcript)
+```
+Profile cleanup:
+
+```{r}
+# For Gender, replace missing values with 'U' (Unknown)
+profile$gender[is.na(profile$gender)] <- 'U'
+
+# Convert 'income' column to numeric
+profile$income <- as.numeric(profile$income)
+
+# Convert 'age' column to integer
+profile$age <- as.integer(profile$age)
+```
+
+```{r}
+# Plot the histogram
+hist(profile$income, breaks = 10, col = "lightblue", main = "Income Distribution", xlab = "Income", ylab = "Frequency")
+
+# Add a vertical line at the mean
+abline(v = mean(profile$income), col = "red", lwd = 2)
+```
+
+```{r}
+# Calculate the mean of the 'income' column
+mean_val <- mean(profile$income, na.rm = TRUE)
+mean_val
+# Replace missing values with the mean value
+profile$income[is.na(profile$income)] <- mean_val
+```
+```{r}
+# Convert 'became_member_on' to character type
+profile$became_member_on <- as.character(profile$became_member_on)
+
+# Create new columns for year, month, day, and date
+profile$member_year <- as.integer(substr(profile$became_member_on, 1, 4))
+profile$member_month <- as.integer(substr(profile$became_member_on, 5, 6))
+profile$member_day <- as.integer(substr(profile$became_member_on, 7, 8))
+profile$member_date <- as.Date(profile$became_member_on, format = "%Y%m%d")
+
+# Remove the original 'became_member_on' column
+profile <- subset(profile, select = -c(became_member_on))
+head(profile)
+```
+
+
+
