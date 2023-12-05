@@ -715,20 +715,3 @@ df_all_customers <- df_all_customers[, c('person', 'discount_total_offers', 'dis
 
 df_all_customers
 ```
-## Final Analysis
-```{r}
-
-features <- df_all_customers[, c('discount_total_offers', 'discount_completion_pct',
-                                  'discount_min_completion_days', 'discount_max_completion_days',
-                                  'discount_completed_offers', 'discount_avg_completion_days',
-                                  'discount_avg_net_reward', 'bogo_total_offers', 'bogo_completion_pct',
-                                  'bogo_completed_offers', 'bogo_min_completion_days',  'bogo_max_completion_days',
-                                  'bogo_avg_completion_days', 'bogo_avg_net_reward', 'informational_promotions',
-                                  'age', 'gender', 'income', 'total_transactions', 'min_transaction_day',
-                                  'max_transaction_day', 'avg_transaction', 'total_transaction_amount',
-                                  'median_days_between_purchases', 'avg_days_between_purchases')]
-
-features[is.na(features)] <- 0
-features$gender <- as.factor(df_all_customers$gender)
-features <- cbind(features, model.matrix(~gender - 1, data = features))
-```
