@@ -715,3 +715,253 @@ df_all_customers <- df_all_customers[, c('person', 'discount_total_offers', 'dis
 
 df_all_customers
 ```
+## Final Analysis
+```{r}
+install.packages("fastDummies")
+library(fastDummies)
+
+# Select the relevant columns
+X <- df_all_customers[, c('discount_total_offers', 'discount_completion_pct',
+                           'discount_min_completion_days', 'discount_max_completion_days', 'discount_completed_offers',
+                           'discount_avg_completion_days', 'discount_avg_net_reward',
+                           'bogo_total_offers', 'bogo_completion_pct', 'bogo_completed_offers',
+                           'bogo_min_completion_days', 'bogo_max_completion_days', 'bogo_avg_completion_days',
+                           'bogo_avg_net_reward', 'informational_promotions', 'age', 'gender',
+                           'income', 'total_transactions', 'min_transaction_day',
+                           'max_transaction_day', 'avg_transaction', 'total_transaction_amount',
+                           'median_days_between_purchases', 'avg_days_between_purchases')]
+
+# Replace missing values with 0
+X[is.na(X)] <- 0
+
+# Create dummy variables for 'gender'
+new_x <- dummy_cols(X, select_columns = 'gender')
+
+```
+
+```{r}
+
+library(flexclust)
+
+features_matrix <- data.matrix(new_x)
+features_matrix[is.na(features_matrix)] <- colMeans(features_matrix, na.rm = TRUE)
+features_matrix[!is.finite(features_matrix)] <- 0
+
+if (any(!is.finite(features_matrix))) {
+  print("There are still non-finite values in the matrix.")
+} else {
+  k_values <- 1:10
+  sse_values <- sapply(k_values, function(k) kmeans(features_matrix, centers = k)$tot.withinss)
+
+  # Plot the SSE vs. K
+  plot(k_values, sse_values, type = "b", pch = 19, col = "blue",
+       xlab = "K", ylab = "SSE", main = "SSE vs. K")
+}
+
+```
+```{r}
+df_all_customers[is.na(df_all_customers)] <- 0
+
+columns_to_use <- c('discount_total_offers', 'discount_completion_pct',
+                    'discount_min_completion_days', 'discount_max_completion_days', 'discount_completed_offers',
+                    'discount_avg_completion_days', 'discount_avg_net_reward',
+                    'bogo_total_offers', 'bogo_completion_pct', 'bogo_completed_offers',
+                    'bogo_min_completion_days', 'bogo_max_completion_days', 'bogo_avg_completion_days',
+                    'bogo_avg_net_reward', 'informational_promotions', 'age', 'gender',
+                    'income', 'total_transactions', 'min_transaction_day',
+                    'max_transaction_day', 'avg_transaction', 'total_transaction_amount',
+                    'median_days_between_purchases', 'avg_days_between_purchases')
+
+X <- df_all_customers[, columns_to_use]
+
+X <- cbind(X, model.matrix(~gender - 1, data = df_all_customers))
+
+set.seed(123)
+
+hc <- hclust(dist(X), method = "ward.D2")
+
+cluster_labels <- cutree(hc, k = 4)
+df_all_customers$Cluster_4 <- as.factor(cluster_labels)
+```
+```{r}
+head(df_all_customers)
+
+```
+```{r}
+cluster_counts <- table(df_all_customers$Cluster_4)
+
+cluster_relative_frequencies <- prop.table(cluster_counts)
+print(cluster_relative_frequencies)
+```
+
+```{r}
+
+library(ggplot2)
+
+visual_columns <- c('age', 'income', 'total_transactions', 'avg_transaction', 'total_transaction_amount')
+
+df_all_customers[is.na(df_all_customers)] <- 0
+
+for (cluster in unique(df_all_customers$Cluster_4)) {
+  cluster_data <- df_all_customers[df_all_customers$Cluster_4 == cluster, ]
+  png(paste("cluster_", cluster, "_scatterplot.png", sep = ""))
+  pairs(cluster_data[visual_columns], col = cluster)
+  dev.off()
+}
+
+```
+
+```{r}
+library(ggplot2)
+library(gridExtra)
+
+visual_columns <- c('age', 'income', 'total_transactions', 'avg_transaction', 'total_transaction_amount')
+df_all_customers[is.na(df_all_customers)] <- 0
+
+scatterplots <- lapply(unique(df_all_customers$Cluster_4), function(cluster) {
+  cluster_data <- df_all_customers[df_all_customers$Cluster_4 == cluster, ]
+  pairs(cluster_data[visual_columns], col = cluster)
+})
+
+grid.arrange(grobs = scatterplots, ncol = 2)
+```
+```{r}
+visual_columns <- c('discount_completion_pct', 'bogo_completion_pct', 'total_transactions', 'total_transaction_amount', 'median_days_between_purchases', 'Cluster_4')
+
+df_all_customers[is.na(df_all_customers)] <- 0
+
+scatterplots <- lapply(unique(df_all_customers$Cluster_4), function(cluster) {
+  cluster_data <- df_all_customers[df_all_customers$Cluster_4 == cluster, ]
+  pairs(cluster_data[visual_columns], col = cluster)
+})
+
+grid.arrange(grobs = scatterplots, ncol = 2)
+
+```
+```{r}
+visual_columns <- c('total_transaction_amount', 'total_transactions', 'Cluster_4')
+
+df_all_customers[is.na(df_all_customers)] <- 0
+
+library(GGally)
+
+ggpairs(df_all_customers[visual_columns], mapping = aes(color = Cluster_4))
+
+```
+```{r}
+visual_columns <- c('total_transaction_amount', 'total_transactions', 'Cluster_4')
+
+df_all_customers[is.na(df_all_customers)] <- 0
+
+library(ggplot2)
+
+ggplot(df_all_customers, aes(x = total_transaction_amount, y = total_transactions, color = as.factor(Cluster_4))) +
+  geom_point(size = 3) +
+  labs(title = "Scatterplot of Total Transaction Amount vs. Total Transactions",
+       x = "Total Transaction Amount",
+       y = "Total Transactions") +
+  theme_minimal() +
+  theme(legend.position = "top") +
+  scale_color_discrete(name = "Cluster")
+
+```
+
+```{r}
+visual_columns <- c('median_days_between_purchases', 'total_transaction_amount', 'Cluster_4')
+df_all_customers[is.na(df_all_customers)] <- 0
+
+library(ggplot2)
+
+ggplot(df_all_customers, aes(x = median_days_between_purchases, y = total_transaction_amount, color = as.factor(Cluster_4))) +
+  geom_point(size = 3) +
+  labs(title = "Scatterplot of Median Days Between Purchases vs. Total Transaction Amount",
+       x = "Median Days Between Purchases",
+       y = "Total Transaction Amount") +
+  theme_minimal() +
+  theme(legend.position = "top") +
+  scale_color_discrete(name = "Cluster")
+
+```
+```{r}
+visual_columns <- c('income', 'Cluster_4')
+
+
+ggplot(df_all_customers, aes(x = income, y = as.factor(Cluster_4), color = as.factor(Cluster_4))) +
+  geom_point(size = 3) +
+  labs(title = "Scatterplot of Income vs. Cluster",
+       x = "Income",
+       y = "Cluster") +
+  theme_minimal() +
+  theme(legend.position = "top") +
+  scale_color_discrete(name = "Cluster")
+```
+
+
+```{r}
+library(dplyr)
+
+merged_df <- inner_join(offers_final_df, df_all_customers[, c('person', 'Cluster_4')], by = 'person')
+
+clust_offer_aggs <- merged_df %>%
+  group_by(Cluster_4, offer_type, difficulty, reward, .drop = FALSE) %>%
+  summarize(
+    CompletedOffers = mean(CompletedOffer),
+    TotalCompletions = sum(CompletedOffer),
+    AvgDaysToCompleteOffer = mean(DaysToCompleteOffer, na.rm = TRUE),
+    NetReward = max(NetReward),
+    .groups = 'keep'
+  ) %>%
+  filter(offer_type != 'informational') %>%
+  rename(
+    Cluster_4 = Cluster_4,
+    offer_type = offer_type,
+    difficulty = difficulty,
+    reward = reward,
+    CompletedOffers = CompletedOffers,
+    TotalCompletions = TotalCompletions,
+    AvgDaysToCompleteOffer = AvgDaysToCompleteOffer,
+    NetReward = NetReward
+  )
+
+clust_offer_aggs
+
+```
+
+
+```{r}
+library(dplyr)
+final_comparisons <- inner_join(
+  clust_offer_aggs,
+  final_overall_offers_df %>% select(offer_type, difficulty, reward, CompletedOffers),
+  by = c('offer_type', 'difficulty', 'reward')
+) %>%
+  arrange(Cluster_4, offer_type, difficulty, reward)
+
+colnames(final_comparisons) <- c('Cluster_4', 'offer_type', 'difficulty', 'reward', 'ClusterCompletedOffers',
+                                  'TotalCompletions', 'AvgDaysToCompleteOffer', 'NetReward',
+                                  'AvgCompletedOffers')
+
+bogo_or_discount <- function(row) {
+
+
+  cluster_val <- as.numeric(row['ClusterCompletedOffers'])
+  avg_val <- as.numeric(row['AvgCompletedOffers'])
+
+  if (!is.na(cluster_val) && !is.na(avg_val) && cluster_val + 0.05 > avg_val) {
+    return('discount')
+  } else {
+    return('bogo')
+  }
+}
+
+final_comparisons$BOGO_or_Discount <- apply(final_comparisons, 1, bogo_or_discount)
+
+result <- final_comparisons %>%
+  select(c('Cluster_4', 'offer_type', 'difficulty', 'reward',
+           'ClusterCompletedOffers', 'AvgCompletedOffers', 'BOGO_or_Discount')) %>%
+  arrange(Cluster_4, offer_type, difficulty, reward) %>%
+  arrange(Cluster_4, offer_type, difficulty, reward)
+
+print(result)
+
+```
