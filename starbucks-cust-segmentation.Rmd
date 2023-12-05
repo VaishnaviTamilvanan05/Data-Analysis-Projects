@@ -511,6 +511,224 @@ person_summary <- completion %>%
 print(person_summary)
 
 ```
+```{r}
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+```{r}
+offers_final_df <- merge(completion
+                        , portfolio_orig
+                        , by.x = "value"
+                        , by.y = "id"
+                        , all = FALSE
+                        )
+
+
+offers_final_df$reward <- as.numeric(offers_final_df$reward)
+offers_final_df$difficulty <- as.numeric(offers_final_df$difficulty)
+
+offers_final_df$NetReward <- offers_final_df$reward - offers_final_df$difficulty
+
+tail(offers_final_df)
+
+```
+
+```{r}
+library(dplyr)
+
+# Assuming 'offers_final_df' is your DataFrame in R
+
+# Group by offer_type, difficulty, and reward
+overall_offers_df <- offers_final_df %>%
+  group_by(offer_type, difficulty, reward) %>%
+  summarise(
+    CompletedOffers = mean(CompletedOffer),
+    TotalCompletions = sum(CompletedOffer),
+    AvgDaysToComplete = ifelse(all(is.na(DaysToCompleteOffer)), NA, mean(DaysToCompleteOffer, na.rm = TRUE)),
+    NetReward = max(NetReward)
+  )
+
+# Drop the second level of column names
+
+# Rename columns
+colnames(overall_offers_df) <- c('offer_type', 'difficulty', 'reward', 'CompletedOffers', 'TotalCompletions', 'AvgDaysToComplete', 'NetReward')
+
+# Calculate NetWorth
+overall_offers_df$NetWorth <- (overall_offers_df$CompletedOffers * overall_offers_df$NetReward) * -1
+
+# Filter out 'informational' offers
+final_overall_offers_df <- overall_offers_df[overall_offers_df$offer_type != 'informational', ]
+
+# Display the resulting DataFrame
+final_overall_offers_df
+
+```
+## Individual metrics
+
+```{r}
+library(dplyr)
+
+# Assuming 'transcript' is your data frame in R
+all_transactions <- transcript %>%
+  filter(value_type == 'amount') %>%
+  mutate(value = as.numeric(value))
+
+# Display the first few rows
+head(all_transactions)
+
+```
+
+
+```{r}
+library(dplyr)
+library(tidyr)
+
+df_all_customers <- data.frame(
+  person = character(),
+  discount_total_offers = numeric(),
+  discount_completion_pct = numeric(),
+  discount_min_completion_days = numeric(),
+  discount_max_completion_days = numeric(),
+  discount_completed_offers = numeric(),
+  discount_avg_completion_days = numeric(),
+  discount_avg_net_reward = numeric(),
+  bogo_total_offers = numeric(),
+  bogo_completion_pct = numeric(),
+  bogo_completed_offers = numeric(),
+  bogo_min_completion_days = numeric(),
+  bogo_max_completion_days = numeric(),
+  bogo_avg_completion_days = numeric(),
+  bogo_avg_net_reward = numeric(),
+  informational_promotions = numeric(),
+  age = numeric(),
+  gender = character(),
+  income = numeric(),
+  member_date = character(),
+  total_transactions = numeric(),
+  min_transaction_day = numeric(),
+  max_transaction_day = numeric(),
+  avg_transaction = numeric(),
+  total_transaction_amount = numeric(),
+  median_days_between_purchases = numeric(),
+  avg_days_between_purchases = numeric()
+)
+for (person in unique(profile$id)) {
+  personal_profile <- profile[profile$id == person, c('id', 'age', 'gender', 'income', 'member_date')]
+  personal_profile <- rename(personal_profile, person = id)  # Rename 'id' to 'person'
+  
+  personal_transactions <- all_transactions[all_transactions$person == person, ]
+  if (nrow(personal_transactions) > 0) {
+    personal_transactions$DaysFromLastPurchase <- c(NA, diff(personal_transactions$time))
+    personal_agg_trans <- personal_transactions %>%
+      group_by(person) %>%
+      summarize(
+        total_transactions = n(),
+        min_transaction_day = min(time),
+        max_transaction_day = max(time),
+        avg_transaction = mean(value),
+        total_transaction_amount = sum(value),
+        median_days_between_purchases = median(DaysFromLastPurchase, na.rm = TRUE),
+        avg_days_between_purchases = mean(DaysFromLastPurchase, na.rm = TRUE)
+      )
+  } else {
+    personal_agg_trans <- data.frame(
+      person = person,
+      total_transactions = NA,
+      min_transaction_day = NA,
+      max_transaction_day = NA,
+      avg_transaction = NA,
+      total_transaction_amount = NA,
+      median_days_between_purchases = NA,
+      avg_days_between_purchases = NA
+    )
+  }
+  
+  personal_df_1 <- inner_join(personal_profile, personal_agg_trans, by = 'person')
+  
+  for (offer_type in c('discount', 'bogo')) {
+    offer_df <- offers_final_df %>%
+      filter(person == person, offer_type == offer_type) %>%
+      group_by(person) %>%
+      summarize(
+        !!paste0(offer_type, '_total_offers') := n(),
+        !!paste0(offer_type, '_completion_pct') := mean(CompletedOffer),
+        !!paste0(offer_type, '_completed_offers') := sum(CompletedOffer),
+        !!paste0(offer_type, '_min_completion_days') := min(DaysToCompleteOffer),
+        !!paste0(offer_type, '_max_completion_days') := max(DaysToCompleteOffer),
+        !!paste0(offer_type, '_avg_completion_days') := mean(DaysToCompleteOffer),
+        !!paste0(offer_type, '_avg_net_reward') := mean(NetReward)
+      )
+    if (nrow(offer_df) == 0) {
+      offer_df <- data.frame(
+        person = person,
+        !!paste0(offer_type, '_total_offers') := NA,
+        !!paste0(offer_type, '_completion_pct') := NA,
+        !!paste0(offer_type, '_completed_offers') := NA,
+        !!paste0(offer_type, '_min_completion_days') := NA,
+        !!paste0(offer_type, '_max_completion_days') := NA,
+        !!paste0(offer_type, '_avg_completion_days') := NA,
+        !!paste0(offer_type, '_avg_net_reward') := NA
+      )
+    }
+    
+    assign(paste0(offer_type, '_df'), offer_df)
+  }
+  
+
+  bogo_and_discounts <- inner_join(get(paste0('discount_df')), get(paste0('bogo_df')), by = 'person') %>%
+    mutate(informational_promotions = length(offers_final_df[person == person & offer_type == 'informational', ]))
+  person_final <- inner_join(bogo_and_discounts, personal_df_1, by = 'person')
+
+  person_final$member_date <- as.character(person_final$member_date)
+
+  df_all_customers <- bind_rows(df_all_customers, person_final)
+
+
+}
+
+```
+
+```{r}
+df_all_customers <- df_all_customers[, c('person', 'discount_total_offers', 'discount_completion_pct',
+       'discount_min_completion_days', 'discount_max_completion_days', 'discount_completed_offers',
+       'discount_avg_completion_days', 'discount_avg_net_reward',
+       'bogo_total_offers', 'bogo_completion_pct', 'bogo_completed_offers', 'bogo_min_completion_days',
+       'bogo_max_completion_days', 'bogo_avg_completion_days',
+       'bogo_avg_net_reward', 'informational_promotions', 'age', 'gender',
+       'income', 'member_date', 'total_transactions', 'min_transaction_day',
+       'max_transaction_day', 'avg_transaction', 'total_transaction_amount',
+       'median_days_between_purchases', 'avg_days_between_purchases')]
+
+df_all_customers
+```
+## Final Analysis
+```{r}
+
+features <- df_all_customers[, c('discount_total_offers', 'discount_completion_pct',
+                                  'discount_min_completion_days', 'discount_max_completion_days',
+                                  'discount_completed_offers', 'discount_avg_completion_days',
+                                  'discount_avg_net_reward', 'bogo_total_offers', 'bogo_completion_pct',
+                                  'bogo_completed_offers', 'bogo_min_completion_days',  'bogo_max_completion_days',
+                                  'bogo_avg_completion_days', 'bogo_avg_net_reward', 'informational_promotions',
+                                  'age', 'gender', 'income', 'total_transactions', 'min_transaction_day',
+                                  'max_transaction_day', 'avg_transaction', 'total_transaction_amount',
+                                  'median_days_between_purchases', 'avg_days_between_purchases')]
+
+features[is.na(features)] <- 0
+features$gender <- as.factor(df_all_customers$gender)
+features <- cbind(features, model.matrix(~gender - 1, data = features))
+```
