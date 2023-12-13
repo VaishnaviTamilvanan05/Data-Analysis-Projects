@@ -29,10 +29,17 @@ Here is the schema and explanation of each variable in the files:
 - person (str) - customer id
 - time (int) - time in hours since start of test. The data begins at time t=0
 - value - (dict of strings) - either an offer id or transaction amount depending on the record
-# SMART Questions: 
+# SMART Questions - MIDTERM: 
 1. How do different promotional events (received, viewed, completed) affect customer retention and repeat business with Starbucks over time?             
 2. What is the profile of the customer base, including their gender distribution, age distribution, and income range, and how do these factors relate to each other?
 3. What are the most popular offers and the influential factors driving the View rates of the Offers?
 4. Which age groups are more likely to accept offers than others? Do these preferences also differ based on gender?
+
+# SMART QUESTIONS - FINAL:
+
+1. How can we design a precise predictive model to classify customer responses to offers as successful or not?
+2. Can we predict which customer segment a new customer is likely to belong to based on their demographics?
+
+
 
 
