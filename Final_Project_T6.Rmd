@@ -12,6 +12,20 @@ output:
 knitr::opts_chunk$set(warning = F, results = "hide", message = F)
 options(scientific=T, digits = 3) 
 ```
+# ABSTRACT
+ 
+  With the main goals of this extensive project being to maximize the effectiveness of promotional activities, improve overall satisfaction, and increase customer engagement, we conducted a thorough analysis of Starbucks' marketing strategies. Our analysis involved a deep dive into Starbucks' customer data, using a variety of visualizations and statistical methods to uncover insights. 
+
+  Our initiative's primary goal was to increase customer satisfaction and engagement. Our goal was to determine the best channels for promotions and tailor our products to each individual customer's needs. We used a variety of sophisticated modeling methods, such as k-means clustering, logistic regression, decision trees, and support vector machines (SVM), to accomplish this. These models were crucial in helping us understand consumer preferences and behavior. Our strategy is expected to improve the efficacy and efficiency of Starbucks' to improve the efficiency of guaranteeing the company's sustained customer satisfaction and market dominance. It is fully documented in a R Markdown file in our GitHub repository.
+
+
+# INTRODUCTION
+
+  Our project examines the interactions and transactions of 17,000 customers using the Starbucks Customer Dataset. We use K-Means clustering for customer segmentation using data from responses (transcript.csv), customer demographics (profile.csv), and offers (portfolio.csv). With the use of this method, strategies can be more precisely targeted by identifying unique behavioral and demographic patterns. Through the analysis of purchase behaviors and offer responsiveness, our goal is to improve customer engagement and promotional efficacy at Starbucks.
+
+# SUMMARY OF DATASET
+
+The data is contained in three files: portfolio.csv - data about offers sent to customers (10 offers x 6 columns) profile.csv - demographic data of customers (17,000 customers x 5 columns) transcript.csv - customer response to offers and transactions made (306,648 events x 4 columns)
 
 # DATASET OVERVIEW
 ```{r, results='markup'}
