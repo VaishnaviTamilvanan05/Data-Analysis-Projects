@@ -1,4 +1,4 @@
-# DATS_6101 - Data Brew: Brewing Success with Starbucks Customer Insights
+# DATS_6101 - Data Brew: Brewing Success with Starbucks Customer Data
 # Proposal: 
 The Starbucks Customer Dataset simulates interactions and transactions to optimize promotional strategies. It includes diverse offers sent through different channels to 17,000 customers with demographic details. Events capture customer responses and transactions, enabling analysis of offer effectiveness and customer behavior.
 
