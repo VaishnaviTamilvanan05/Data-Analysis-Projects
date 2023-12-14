@@ -767,8 +767,6 @@ print(conf_matrix_caret)
 summary(model_lm_new)
 ```
 
-
-
 ```{r, results='markup'}
 # Plot ROC curve
 library(pROC)
@@ -780,6 +778,235 @@ auc_value <- auc(roc_curve)
 legend("bottomright", legend = paste("AUC =", round(auc_value, 4)), col = "blue", lwd = 2)
 ```
 
+```{r, results='markup'}
+
+# Load libraries
+library(dplyr)
+library(rpart)
+library(caret)
+
+# Split the data into training and testing sets
+set.seed(123)  # Set seed for reproducibility
+sample_index <- sample(nrow(model_df), 0.8 * nrow(model_df))
+train_data <- model_df[sample_index, ]
+test_data <- model_df[-sample_index, ]
+
+formula <- as.formula("offer_success ~ user_id + offer_id + offer_reward + difficulty + duration + bogo + discount + informational + email + mobile + social + web")
+
+# Train the Decision Tree model
+model_dtree_old <- rpart(formula, data = train_data, method = "class")
+
+# Make predictions on the test set
+predictions <- predict(model_dtree_old, newdata = test_data, type = "class")
+
+# Evaluate the model
+conf_matrix <- table(predictions, test_data$offer_success)
+accuracy <- sum(diag(conf_matrix)) / sum(conf_matrix)
+
+# Use caret's confusionMatrix function for a detailed report
+conf_matrix_caret <- confusionMatrix(data = as.factor(predictions), reference = as.factor(test_data$offer_success))
+
+print(conf_matrix)
+print(paste("Accuracy:", round(accuracy, 4)))
+print("\n***Decision Tree***\n")
+print(conf_matrix_caret)
+```
+```{r, results='markup'}
+# install.packages("ROSE")
+library(ROSE)
+library(rpart)
+
+# Subset data with top features
+top_features <- c("offer_reward", "difficulty", "duration", "bogo", "mobile", "social", "web")
+train_data <- train_data[, c(top_features, "offer_success")]
+test_data <- test_data[, c(top_features, "offer_success")]
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Define the model formula with top features
+formula <- as.formula("offer_success ~ offer_reward + difficulty + duration + bogo + mobile + social + web")
+
+# Apply random oversampling to the training data
+oversampled_object <- ovun.sample(formula, data = train_data, method = "over", N = 2 * sum(train_data$offer_success == 1), seed = 123)
+
+# Extract the balanced dataset from the oversampled object
+train_data_balanced <- oversampled_object$data
+
+# Train the Decision Tree model on the balanced data
+model_dtree_new <- rpart(formula, data = train_data_balanced, method = "class", control = rpart.control(cp = 0.01))
+
+# Make predictions on the test set
+predictions <- predict(model_dtree_new, newdata = test_data, type = "class")
+
+# Evaluate the model
+conf_matrix <- table(predictions, test_data$offer_success)
+accuracy <- sum(diag(conf_matrix)) / sum(conf_matrix)
+
+conf_matrix_caret <- confusionMatrix(data = as.factor(predictions), reference = as.factor(test_data$offer_success))
+
+print(conf_matrix)
+print(paste("Accuracy:", round(accuracy, 4)))
+print("\n***Decision Tree with random oversampling***\n")
+print(conf_matrix_caret)
+```
+```{r, results='markup'}
+# Install and load necessary packages if not already installed
+# install.packages(c("pROC", "caret", "ROCR"))
+library(pROC)
+library(caret)
+library(ROCR)
+
+# Function to plot ROC curve
+plotROC <- function(predictions, labels, main = "ROC Curve") {
+  roc_curve <- roc(labels, as.numeric(predictions))
+  auc_value <- auc(roc_curve)
+  
+  plot(roc_curve, main = main, col = "blue", lwd = 2)
+  abline(a = 0, b = 1, lty = 2, col = "red")  # Diagonal line for reference
+  legend("bottomright", legend = paste("AUC =", round(auc_value, 4)), col = "blue", lwd = 2)
+}
+
+# Plot ROC curve
+plotROC(predictions, test_data$offer_success, main = "ROC Curve for Decision Tree Model")
+```
+
+
+
+## SMART Q2: Can we predict which customer segment a new customer is likely to belong to based on their demographics?
+```{r, results='markup'}
+
+cluster_data <- merged_data %>%
+  group_by(id) %>%
+  summarise(
+    age = first(age),
+    income = first(income),
+    num_transactions = sum(transaction, na.rm = TRUE),
+    total_offers_received = sum(offer_received),
+    total_offers_viewed = sum(offer_viewed),
+    total_offers_completed = sum(offer_completed),
+    membership_duration = first(membership_duration),
+    gender = first(gender)
+  )
+scaled_data <- scale(cluster_data[, c("age", "income", "num_transactions", "total_offers_received", "total_offers_viewed", "total_offers_completed", "membership_duration")])
+
+# Determine the optimal number of clusters (k) using the elbow method
+wss <- numeric(10)
+for (i in 1:10) {
+  wss[i] <- sum(kmeans(scaled_data, centers = i)$withinss)
+}
+
+# Plot the elbow method to find the optimal k
+plot(1:10, wss, type = "b", xlab = "Number of Clusters (k)", ylab = "Within Sum of Squares (WSS)")
+
+# Based on the plot, choose the optimal k (elbow point)
+optimal_k <- 4  # Adjust this based on the plot
+
+# Print the result of the elbow method
+cat("Optimal number of clusters (k) based on the elbow method:", optimal_k, "\n")
+
+# Apply K-Means clustering with the optimal k
+kmeans_model <- kmeans(scaled_data, centers = optimal_k)
+
+# Add the cluster labels to the original dataset
+cluster_data$cluster <- as.factor(kmeans_model$cluster)
+
+# Analyze the characteristics of each cluster
+cluster_profiles <- cluster_data %>%
+  group_by(cluster) %>%
+  summarise_all(mean)
+
+print(cluster_profiles)
+
+```
+
+```{r, results='markup'}
+
+# Based on the plot, choose the optimal k (elbow point)
+optimal_k <- 4  # Adjust this based on the plot
+
+# Apply K-Means clustering with the optimal k
+kmeans_model <- kmeans(scaled_data, centers = optimal_k)
+
+# Add the cluster labels to the original dataset
+cluster_data$cluster <- as.factor(kmeans_model$cluster)
+
+# Analyze the characteristics of each cluster
+cluster_profiles <- cluster_data %>%
+  group_by(cluster) %>%
+  summarise_all(mean)
+
+print(cluster_profiles)
+
+```
+
+```{r, results='markup'}
+unique(merged_data$cluster)
+```
+```{r}
+library(caret)
+library(e1071)
+
+
+set.seed(123)  # Set seed for reproducibility
+index <- createDataPartition(cluster_data$cluster, p = 0.8, list = FALSE)
+train_data <- cluster_data[index, ]
+test_data <- cluster_data[-index, ]
+
+
+table(cluster_data$cluster)
+
+# Train SVM with class weights
+svm_model <- svm(cluster ~ age + income +  num_transactions + total_offers_received + total_offers_viewed + total_offers_completed + membership_duration + gender, 
+                 data = cluster_data, 
+                 kernel = "radial",
+                 class.weights = table(cluster_data$cluster) / nrow(cluster_data))
+
+# Make predictions on the test set
+predictions <- predict(svm_model, newdata = test_data)
+
+# Evaluate the model
+confusion_matrix <- table(predictions, test_data$cluster)
+print(confusion_matrix)
+
+# Calculate accuracy
+accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+print(paste("Accuracy: ", accuracy))
+
+```
+
+
+```{r, results='markup'}
+# Assuming 'confusion_matrix' is your confusion matrix
+# Extract the elements from the confusion matrix
+tp <- confusion_matrix[2, 2]  # True Positives
+fp <- confusion_matrix[1, 2]  # False Positives
+
+# Calculate precision
+precision <- tp / (tp + fp)
+
+# Print precision
+print(paste("Precision: ", precision))
+
+```
+
+
+```{r, results='markup'}
+tp <- confusion_matrix[2, 2]  # True Positives
+fn <- confusion_matrix[2, 1]  # False Negatives
+tn <- confusion_matrix[1, 1]  # True Negatives
+fp <- confusion_matrix[1, 2]  # False Positives
+
+# Calculate sensitivity (recall)
+sensitivity <- tp / (tp + fn)
+
+# Calculate specificity
+specificity <- tn / (tn + fp)
+
+# Print sensitivity and specificity
+print(paste("Sensitivity: ", sensitivity))
+print(paste("Specificity: ", specificity))
+```
 
 
 
