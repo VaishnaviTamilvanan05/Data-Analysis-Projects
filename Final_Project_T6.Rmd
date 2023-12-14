@@ -371,6 +371,310 @@ interactive_plot
 
 As expected, not all recieved offers were viewed and not all recieved offers were completed. The dataset contains 45% transaction events and 55% offer events.
 
+## Percentages of each offer type sent.
+
+```{r, results='markup'}
+colors <- c("#ad6a6c", "#d0ada7", "#e8d6cb")
+
+# Count the frequency of each offer type
+offer_counts <- table(new_portfolio$offer_type)
+
+ggplot(data = as.data.frame(offer_counts), aes(x = Var1, y = Freq)) +
+  geom_bar(stat = "identity", fill = colors, color = "black") +
+  labs(title = "Frequency of Each Offer Type",
+       x = "Offer Type",
+       y = "Count") +
+  scale_fill_manual(values = colors)
+```
+
+From the above observation BOGO and the discount offer type has the maximum count of nearly 66,000 and 62,000 respectively while the informational offer had the least count.
+
+
+
+```{r, results='markup'}
+# Load the ggplot2 library
+library(ggplot2)
+
+# Create a scatterplot
+ggplot(profile_new, aes(x = gender, y = income, color = gender)) +
+  geom_jitter(width = 0.3, alpha = 0.7, size = 1) +
+  labs(title = "Scatterplot of Income vs Gender", x = "Gender", y = "Income") +
+  scale_color_manual(values = c("#E41A1C", "#377EB8", "#4DAF4A")) +  # Custom colors
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),
+        panel.grid.major.y = element_line(color = "gray90"),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+1) Male customers have a right-skewed income distribution, indicating that a larger proportion of male customers falls within the lower half of the income spectrum among the company's customer base.
+
+2) Male customers have a right-skewed income distribution, indicating that a larger proportion of male customers falls within the lower half of the income spectrum among the company's customer base.
+
+3) Female customers have a significantly higher average income compared to customers of other genders. This disparity in income may be attributed to the assumption that female customers, on average, are older than customers in other gender groups.
+
+4) On average, female customers have an income of \$71,000, while male customers have an average income of \$61,000. Customers of other genders have an average income of \$63,000.
+
+## Income vs Gender vs Age
+```{r, results='markup'}
+# Load necessary libraries
+library(plotly)
+library(dplyr)
+
+# Create a 3D scatterplot with Plotly
+scatter_3d <- profile_new %>%
+  plot_ly(x = ~age, y = ~income, z = ~gender, color = ~gender, colors = c("#E41A1C", "#377EB8", "#4DAF4A"),
+          type = "scatter3d", mode = "markers",
+          marker = list(size = 2)) %>%
+  layout(scene = list(xaxis = list(title = "Age"),
+                     yaxis = list(title = "Income"),
+                     zaxis = list(title = "Gender")))
+
+# Show the 3D scatterplot
+scatter_3d
+```
+
+
+-   Income tends to increase with age for both men and women. This is evident from the fact that the scatterplot shows a general upward trend from left to right.
+
+-   Another interesting thing we can observe is that female customers with higher incomes, on average, are older than customers in other gender groups.
+
+The customer base consists of a larger proportion of males (57.2%) compared to females (41.3%), with a minor representation (1.4%) from customers identifying with other genders. The customer age range spans from 18 years as the youngest to 101 years as the oldest. The income of customers spans from 30k to 120k, with an average income of 65.4k. The income distribution closely mirrors that of the general population. There is a logical relationship between age and cafe visits, as individuals between 46 and 75 years tend to have more available time to visit cafes. The income distribution varies between genders, with females having higher average incomes
+
+
+
+
+# DATA MODELLING
+
+## SMART Q1: How can we design a precise predictive model to classify customer responses to offers as successful or not?
+Now that we have analyzed the dataset, we will proceed by creating a model that would predict whether a user will respond to an offer or not. There are 4 scenarios that can happen:
+
+A user will view and complete the offer.
+A user will just view the offer.
+A user will not view the offer, but will complete it anyway (without prior knowledge of the offer existence)
+A user will not view the offer and will not complete it.
+
+Since starbucks are targetting users that will view the offer and complete it afterwards, our prediction would be a binary value as such: 1: User will view and complete the offer 0: Otherwise
+
+
+In order to proceed with the prediction, we will need to create a new dataframe that will include the targeted features and the prediction column. The features that will be analyzed are:
+
+Age
+Income
+Gender
+Offer_type
+Reward
+Duration
+Difficulty
+Channels
+
+A new column will be created "offer_success" to show wehther a user will successfully view and complete the offer.
+
+From the datasets, Offer types BOGO and discount have a clear criteria for completion and can be founded by looking at the event column with value "completed offer" and then double check that the timing of completion and viewing and offer expiration are consistent.
+
+However, dealing with informational offers is different. Since informational offers are advertisement offers that don't have a completion criteria, we will need to define how to consider them successful.
+
+One way would be to look at all transactions and check if a transaction has occurred during an informational offer period. These transactions are considered to be influenced by the offer and thus the informational offer was successful. This is, of course, under the condition that a user has received and viewed the informational offer, THEN proceed to make a transaction.
+
+In order to do that,  create one dataset that includes all pairs (user_id and offer_id) of completed offers for Bogo and discount. Also create another dataset that includes all pairs (user_id and offer_id) of completed offers for type informational.
+
+Next, will merge them together into a bigger dataset including all successfully completed offers.
+
+
+```{r, results='markup'}
+library(dplyr)
+
+# Filter offer_received_df
+offer_received_df <- transcript_new %>%
+  filter(offer_received == 1) %>%
+  select(offer_id, user_id, time) %>%
+  rename(time_received = time)
+
+# Filter offer_viewed_df
+offer_viewed_df <- transcript_new %>%
+  filter(offer_viewed == 1) %>%
+  select(offer_id, user_id, time) 
+  
+
+
+# Filter offer_completed_df
+offer_completed_df <- transcript_new %>%
+  filter(offer_completed == 1) %>%
+  select(offer_id, user_id, time) 
+
+# Merge offer_completed_df and offer_viewed_df
+complete_bogo_discount_df <- merge(offer_completed_df, offer_viewed_df, by = c('offer_id', 'user_id'))
+
+# Merge with offer_received_df
+complete_bogo_discount_df <- merge(complete_bogo_discount_df, offer_received_df, by = c('offer_id', 'user_id'))
+
+complete_bogo_discount_df <- complete_bogo_discount_df %>%
+  rename(time_completed = time.x, time_viewed = time.y)
+
+
+complete_bogo_discount_df <- merge(complete_bogo_discount_df, new_portfolio, by = 'offer_id')
+
+# Display the resulting data frame
+head(complete_bogo_discount_df)
+```
+
+
+```{r, results='markup'}
+library(dplyr)
+
+
+complete_bogo_discount_df <- complete_bogo_discount_df %>%
+  mutate(time_expire = time_received + duration * 24)
+
+# Display the resulting data frame
+head(complete_bogo_discount_df)
+
+```
+```{r, results='markup'}
+library(dplyr)
+
+complete_bogo_discount_df <- complete_bogo_discount_df %>%
+  filter(
+    time_received <= time_viewed,
+    time_viewed <= time_completed,
+    time_completed <= time_expire
+  )
+
+# Display the resulting data frame
+head(complete_bogo_discount_df)
+
+```
+We have created the first dataset, we will repeat similar logic to create second dataset.
+```{r, results='markup'}
+library(dplyr)
+
+# Dataframe holding the events where a transaction took place
+transaction_df <- transcript_new %>%
+  filter(transaction == 1) %>%
+  select(user_id, time, amount)
+
+# Merge transaction and offer_viewed dataframes
+complete_info_df <- left_join(transaction_df, offer_viewed_df, by = 'user_id')
+
+# Merge with offer_received_df
+complete_info_df <- left_join(complete_info_df, offer_received_df, by = c('offer_id', 'user_id'))
+complete_info_df <- complete_info_df %>%
+  rename(time_transaction = time.x, time_viewed = time.y)
+
+
+# Merge with new_portfolio
+complete_info_df <- left_join(complete_info_df, new_portfolio, by = 'offer_id')
+
+# Calculate offer expiration
+complete_info_df <- complete_info_df %>%
+  mutate(time_expire = time_received + duration * 24)
+
+# Choose only informational offer
+complete_info_df <- filter(complete_info_df, informational == 1)
+
+#filter based on the mentioned criteria
+complete_info_df <- complete_info_df %>%
+  filter(
+    time_viewed >= time_received,
+    time_transaction <= time_expire,
+    time_viewed <= time_transaction
+  )
+
+
+complete_bogo_discount_df <- mutate(complete_bogo_discount_df, offer_success = 1)
+complete_info_df <- mutate(complete_info_df, offer_success = 1)
+
+
+complete_bogo_discount_df <- complete_bogo_discount_df %>%
+  select(user_id, offer_id, offer_success)
+
+complete_info_df <- complete_info_df %>%
+  select(user_id, offer_id, offer_success)
+
+
+head(complete_info_df)
+```
+
+```{r, results='markup'}
+library(dplyr)
+concat_r <- bind_rows(complete_bogo_discount_df, complete_info_df)
+
+head(concat_r)
+```
+
+```{r, results='markup'}
+library(dplyr)
+
+
+df1 <- offer_received_df %>%
+  select(offer_id, user_id) %>%
+  distinct()  # Ensure unique pairs
+
+df2 <- concat_r %>%
+  select(offer_id, user_id, offer_success)
+
+all_clean_df <- left_join(df1, df2, by = c('offer_id', 'user_id'))
+
+# Consider the other offers as unsuccessful
+all_clean_df$offer_success <- ifelse(is.na(all_clean_df$offer_success), 0, all_clean_df$offer_success)
+
+
+all_clean_df <- data.frame(all_clean_df, row.names = NULL)
+
+
+# Subset Columns
+model_df <- all_clean_df %>%
+  select(user_id, offer_id, offer_success)
+
+# Merge with 'portfolio' DataFrame
+model_df <- left_join(model_df, new_portfolio, by = 'offer_id')
+# Merge with 'profile' DataFrame
+model_df <- left_join(model_df, profile_new, by = 'user_id')
+
+# Drop Columns
+model_df <- model_df %>%
+  select(-became_member_on, -offer_type)
+
+head(model_df)
+```
+
+
+```{r, results='markup'}
+normalize_data <- function(df, column) {
+  # Min-Max Normalization
+  df[[column]] <- (df[[column]] - min(df[[column]])) / (max(df[[column]]) - min(df[[column]]))
+  
+  # Return the modified data frame
+  return(df)
+}
+
+
+# Create Integer Mapping for 'gender' Column
+gender_levels <- unique(model_df$gender)
+gender_map <- setNames(as.integer(seq_along(gender_levels)), gender_levels)
+
+model_df$gender <- gender_map[model_df$gender]
+
+# Normalize 'age' and 'income' Columns
+normalize_data <- function(x) {
+  return((x - min(x)) / (max(x) - min(x)))
+}
+
+model_df$age <- normalize_data(model_df$age)
+model_df$income <- normalize_data(model_df$income)
+```
+
+Drop specified columns
+
+```{r, results='markup'}
+columns_to_drop <- c('gender', 'age', 'income')
+model_df <- model_df[, !(names(model_df) %in% columns_to_drop)]
+
+head(model_df)
+
+```
+
+
 
 
 
