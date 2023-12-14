@@ -674,6 +674,112 @@ head(model_df)
 
 ```
 
+```{r, results='markup'}
+# Load libraries
+library(dplyr)
+library(glmnet)
+library(caret)
+
+# Select relevant features based on feature importance
+selected_features <- c("offer_reward", "difficulty", "duration", "bogo", "discount", "email", "mobile", "social", "web")
+formula <- as.formula(paste("offer_success ~", paste(selected_features, collapse = " + ")))
+
+# Split the data into training and testing sets
+set.seed(123)  # Set seed for reproducibility
+sample_index <- sample(nrow(model_df), 0.8 * nrow(model_df))
+train_data <- model_df[sample_index, ]
+test_data <- model_df[-sample_index, ]
+
+formula <- as.formula("offer_success ~ offer_reward + difficulty + duration + bogo + discount + informational + email + mobile + social + web")
+
+# Train the logistic regression model
+model_lm_old <- glm(formula, data = train_data, family = "binomial")
+
+# Make predictions on the test set
+predictions <- predict(model_lm_old, newdata = test_data, type = "response")
+
+# Set a threshold to handle class imbalance
+threshold <- 0.5
+binary_predictions <- ifelse(predictions > threshold, 1, 0)
+
+# Evaluate the model
+conf_matrix <- table(binary_predictions, test_data$offer_success)
+accuracy <- sum(diag(conf_matrix)) / sum(conf_matrix)
+
+conf_matrix_caret <- confusionMatrix(data = as.factor(binary_predictions), reference = as.factor(test_data$offer_success))
+
+print(conf_matrix)
+print(paste("Accuracy:", round(accuracy, 4)))
+print("\n***Logistic regression***\n")
+print(conf_matrix_caret)
+```
+
+
+
+```{r, results='markup'}
+# install.packages("ROSE")
+library(ROSE)
+
+library(dplyr)
+library(glmnet)
+library(caret)
+
+selected_features <- c("offer_reward", "difficulty", "duration", "bogo", "discount", "informational", "mobile", "social", "web")
+formula <- as.formula(paste("offer_success ~", paste(selected_features, collapse = " + ")))
+
+set.seed(123)  # Set seed for reproducibility
+sample_index <- sample(nrow(model_df), 0.8 * nrow(model_df))
+train_data <- model_df[sample_index, ]
+test_data <- model_df[-sample_index, ]
+
+# Address Class Imbalance: Use ROSE for oversampling the minority class
+oversampled_train_data <- ROSE(formula, data = train_data, p = 0.5, seed = 123)$data
+
+formula <- as.formula(paste("offer_success ~", paste(selected_features, collapse = " + ")))
+
+# Train the logistic regression model with regularization (elastic net)
+model_lm_new <- cv.glmnet(x = as.matrix(oversampled_train_data[, selected_features, drop = FALSE]),  # Ensure matrix format
+                   y = oversampled_train_data$offer_success,
+                   alpha = 0.5,  # Adjust alpha for desired elastic net mixing
+                   family = "binomial",
+                   standard.error = TRUE)
+
+# Make predictions on the test set
+predictions <- predict(model_lm_new, newx = as.matrix(test_data[, selected_features, drop = FALSE]), s = "lambda.min", type = "response")
+
+# Set a threshold to handle class imbalance
+threshold <- 0.5
+binary_predictions <- ifelse(predictions > threshold, 1, 0)
+
+# Evaluate the model
+conf_matrix <- table(binary_predictions, test_data$offer_success)
+accuracy <- sum(diag(conf_matrix)) / sum(conf_matrix)
+
+conf_matrix_caret <- confusionMatrix(data = as.factor(binary_predictions), reference = as.factor(test_data$offer_success))
+
+print(conf_matrix)
+print(paste("Accuracy:", round(accuracy, 4)))
+print("\n***Logistic regression with regularization***\n")
+print(conf_matrix_caret)
+```
+
+```{r, results='markup'}
+summary(model_lm_new)
+```
+
+
+
+```{r, results='markup'}
+# Plot ROC curve
+library(pROC)
+roc_curve <- roc(test_data$offer_success, predictions)
+plot(roc_curve, main = "ROC Curve", col = "blue", lwd = 2)
+
+# Calculate and print AUC value
+auc_value <- auc(roc_curve)
+legend("bottomright", legend = paste("AUC =", round(auc_value, 4)), col = "blue", lwd = 2)
+```
+
 
 
 
