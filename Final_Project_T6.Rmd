@@ -674,6 +674,20 @@ head(model_df)
 
 ```
 
+Three classifier algorithms will be used
+
+1.LinearSVC
+2.Decision Tree Classifier
+3.k-nearest neighbors
+
+To evaluate a model, we will look into f1-score. The F1 score can be interpreted as a weighted average of the precision and recall which conveys the balance between them.
+
+Looking at Precision value alone would ignore the False Negatives and would make us miss valuable customers that can potentially complete an offer.
+
+Similarity, looking at Recall value alone would ignore False Positives which can make us send offers to everyone and flood users with offers they are not interested in.
+
+For that, F1 score is the best choice in this case as it provides the balance between them.
+
 ```{r, results='markup'}
 # Load libraries
 library(dplyr)
@@ -713,7 +727,19 @@ print(paste("Accuracy:", round(accuracy, 4)))
 print("\n***Logistic regression***\n")
 print(conf_matrix_caret)
 ```
+**OBSERVATION:**
 
+In this logistic regression model, we aim to predict `offer_success` based on features such as `offer_reward`, `difficulty`, `duration`, and communication channels. Despite achieving a high accuracy of 99.93%, the model's effectiveness is questionable due to several concerns:
+
+1. *Class Imbalance*: The dataset shows a significant imbalance between classes, which could lead to a bias towards predicting the majority class, thereby inflating accuracy.
+
+2. *Sensitivity Concerns*: The low sensitivity (60.42%) indicates the model's limited ability in correctly identifying true positives for the minority class.
+
+3. *Potential Overfitting*: The high accuracy might be indicative of overfitting, especially if the test set does not represent the overall population diversity.
+
+4. *Metric Reliability*: Sole reliance on accuracy is misleading in imbalanced datasets; alternative metrics like F1-score or AUC-ROC are recommended for a more comprehensive evaluation.
+
+In summary, while the model shows high accuracy, its real-world applicability is limited by issues like class imbalance, potential overfitting, and an over-reliance on accuracy as the primary performance metric. Addressing these concerns is crucial for developing a more robust and reliable predictive model.
 
 
 ```{r, results='markup'}
@@ -766,6 +792,23 @@ print(conf_matrix_caret)
 ```{r, results='markup'}
 summary(model_lm_new)
 ```
+**OBSERVATION:**
+
+In this improved logistic regression model, we addressed previous limitations through regularization and class imbalance correction. We employed the ROSE package for oversampling the minority class in our training data, leading to a more balanced dataset. Additionally, we utilized the glmnet package to apply elastic net regularization, a combination of L1 and L2 regularization techniques, enhancing the model's ability to generalize and reducing the risk of overfitting.
+
+The new model's performance was evaluated using a confusion matrix and accuracy. The accuracy decreased to 87.96%, a more realistic figure considering the previously imbalanced nature of the dataset. Notably, the sensitivity increased to 94.92%, indicating a significantly improved ability to correctly identify true positives for the minority class. The specificity also remained high at 87.95%, confirming the model's effectiveness in identifying true negatives.
+
+**Key improvements in this model include:**
+
+1. *Handling Class Imbalance*: Oversampling the minority class created a more balanced training dataset, allowing the model to learn more effectively from both classes.
+
+2. *Regularization*: The use of elastic net regularization helped in reducing overfitting by penalizing complex models, thus enhancing the model's generalizability.
+
+3. *Realistic Accuracy*: The adjusted accuracy presents a more realistic view of the model's performance in a balanced scenario.
+
+4. *Improved Sensitivity*: The substantial increase in sensitivity demonstrates the model's enhanced capability in detecting the minority class.
+
+Overall, these adjustments led to a more robust and reliable logistic regression model, better suited for practical applications due to its improved handling of class imbalance and overfitting.
 
 ```{r, results='markup'}
 # Plot ROC curve
@@ -777,6 +820,12 @@ plot(roc_curve, main = "ROC Curve", col = "blue", lwd = 2)
 auc_value <- auc(roc_curve)
 legend("bottomright", legend = paste("AUC =", round(auc_value, 4)), col = "blue", lwd = 2)
 ```
+**OBSERVATION:**
+The ROC-AUC curve displayed represents the performance of the improved logistic regression model. The curve illustrates the trade-off between sensitivity (true positive rate) and specificity (true negative rate) across different thresholds. The AUC (Area Under the Curve) value is a summary measure of the curve; in this model, the AUC is 0.9727.
+
+An AUC of 0.9727 suggests a high degree of separability between the positive and negative classes, indicating that the model is capable of distinguishing between the two with high accuracy. The closer the AUC is to 1, the better the model is at predicting 0s as 0s and 1s as 1s. An AUC value significantly higher than 0.5, which would represent a random guess, indicates that the model has a strong predictive performance.
+
+In summary, the ROC-AUC curve and the high AUC value of 0.9727 reflect the model's robustness and its improved ability to identify both classes accurately, signifying a substantial advancement from the initial logistic regression approach.
 
 ```{r, results='markup'}
 
