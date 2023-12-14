@@ -1,0 +1,266 @@
+---
+title: "Data Brew: Brewing Success with Starbucks Customer Data"
+subtitle: "TEAM 6 - Chekitha Swayampu, Hrushikesh Sai Seshagiri Chowdary Uppalapati, Swathi Murali Srinivasan, Vaishnavi Tamilvanan"
+date: "2023-12-13"
+output:
+  rmdformats::readthedown:
+    df_print: "kable"
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = F, results = "hide", message = F)
+options(scientific=T, digits = 3) 
+```
+
+# DATASET OVERVIEW
+```{r, results='markup'}
+# Load data
+```
+
+```{r}
+portfolio <- read.csv("data/portfolio.csv", row.names = 1)
+profile <- read.csv("data/profile.csv", row.names = 1)
+transcript <- read.csv("data/transcript.csv", row.names = 1)
+```
+
+## BEFORE CLEANING
+### PORTFOLIO
+```{r, results='markup'}
+head(portfolio)
+```
+### PROFILE
+```{r, results='markup'}
+head(profile)
+```
+### TRANSCRIPT
+```{r, results='markup'}
+head(transcript)
+```
+## DATA CLEANING
+```{r, results='markup'}
+# Expand "channels" into binary columns of all different channels in the dataset (email, web, mobile, social)
+
+library(dplyr)
+```
+
+```{r}
+library(stringr)
+
+# Create binary columns for each channel
+channels_list <- c('email', 'web', 'mobile', 'social')
+
+portfolio_channels <- portfolio %>%
+  mutate(email = as.numeric(str_detect(channels, 'email')),
+         web = as.numeric(str_detect(channels, 'web')),
+         mobile = as.numeric(str_detect(channels, 'mobile')),
+         social = as.numeric(str_detect(channels, 'social')))
+
+
+# Create binary columns for each offer type
+portfolio_offertype <- portfolio %>%
+  mutate(bogo = as.numeric(offer_type == 'bogo'),
+         informational = as.numeric(offer_type == 'informational'),
+         discount = as.numeric(offer_type == 'discount'))
+
+merged_portfolio <- merge(portfolio, portfolio_channels, by = "id", all.x = TRUE) %>%
+  merge(portfolio_offertype, by = "id", all.x = TRUE)
+
+new_portfolio <- merged_portfolio %>%
+  select(reward, difficulty, duration, offer_type, id, bogo, discount, informational, email, mobile, social, web)
+
+unique_ids <- unique(new_portfolio$id)
+id_mapping <- setNames(seq_along(unique_ids), unique_ids)
+
+new_portfolio$id <- id_mapping[new_portfolio$id]
+
+# Checking for null values in each column
+```
+
+```{r}
+col_sums_null <- colSums(is.na(new_portfolio))
+
+duplicated_rows <- new_portfolio[duplicated(new_portfolio), ]
+```
+
+### PROFILE
+
+```{r, results='markup'}
+unique_ids <- unique(profile$id)
+id_mapping <- setNames(seq_along(unique_ids), unique_ids)
+
+profile$id <- id_mapping[profile$id]
+na_counts <- colSums(is.na(profile))
+```
+
+```{r}
+cat("ORIGINAL NA VALUES:", na_counts)
+```
+
+
+```{r, results='markup'}
+# Remove rows with NA values and Age equal to 118
+profile_new <- subset(profile, !is.na(age) & age != 118)
+
+na_counts_after_cleaning <- colSums(is.na(profile_new))
+cat("Count of NA values afer removing:",na_counts_after_cleaning)
+
+profile <- na.omit(profile_new)
+```
+
+```{r}
+profile_new$became_member_on <- as.Date(as.character(profile_new$became_member_on), format = "%Y%m%d")
+
+duplicated_rows <- profile_new[duplicated(profile_new), ]
+```
+
+### TRANSCRIPT
+
+```{r}
+library(dplyr)
+
+# Extract offer_id from the 'value' column
+transcript <- transcript %>%
+  mutate(offer_id = ifelse(grepl("'offer id'", value),
+                           gsub(".*'offer id':\\s*'([[:alnum:]]+)'.*", "\\1", value),
+                           ifelse(grepl("'offer_id'", value),
+                                  gsub(".*'offer_id':\\s*'([[:alnum:]]+)'.*", "\\1", value),
+                                  NA)))
+# Create amount column
+transcript <- transcript %>%
+  mutate(amount = ifelse(!is.na(str_extract(value, '"amount": ([0-9.]+)')), 
+                         as.numeric(str_extract(value, '"amount": ([0-9.]+)')), 0))
+
+# Create reward_given column
+transcript <- transcript %>%
+mutate(reward_given = ifelse(!is.na(str_extract(value, '"reward": ([0-9]+)')), 
+                               as.numeric(str_extract(value, '"reward": ([0-9]+)')), 0))
+
+# Remove value column
+transcript <- select(transcript, -value)
+
+if (!requireNamespace("digest", quietly = TRUE)) {
+  install.packages("digest")
+}
+library(digest)
+
+
+# Function to convert person value to an integer
+map_person_to_int <- function(person_value) {
+# Calculate the hash value using SHA-256
+hash_value <- digest(person_value, algo = "sha256", serialize = FALSE)
+# Convert the hash value to a numeric representation
+  person_integer <- sum(as.integer(charToRaw(hash_value)))
+  
+  return(person_integer)
+}
+transcript$person <- sapply(transcript$person, map_person_to_int)
+
+# Create a mapping dictionary
+unique_ids <- unique(transcript$offer_id)
+id_mapping <- setNames(seq_along(unique_ids), unique_ids)
+
+transcript$offer_id <- id_mapping[transcript$offer_id]
+```
+
+```{r}
+library(dplyr)
+
+# Create binary columns for each event
+event_list <- c('offer completed', 'offer received', 'offer viewed', 'transaction')
+
+transcript_new <- transcript %>%
+  mutate(offer_completed = as.numeric(event == 'offer completed'),
+         offer_received = as.numeric(event == 'offer received'),
+         offer_viewed = as.numeric(event == 'offer viewed'),
+         transaction = as.numeric(event == 'transaction'))
+
+# Display the updated data frame
+head(transcript_new)
+```
+
+### PORTFOLIO
+
+```{r, results='markup'}
+
+library(dplyr)
+
+# Rename columns in the 'portfolio' data frame
+new_portfolio <- new_portfolio %>%
+  rename(offer_id = id, offer_reward = reward)
+
+transcript1 <- read.csv("data/transcript.csv", row.names =1)
+profile1 <- read.csv("data/profile.csv", row.names = 1)
+profile1$gender <- as.factor(profile1$gender)
+
+# Impute missing values in 'income' with mean
+profile1$income[is.na(profile1$income)] <- mean(profile1$income, na.rm = TRUE)
+
+# Remove any non-numerc characters
+profile1$became_member_on <- gsub("[^0-9]", "", profile1$became_member_on)
+
+profile1$became_member_on <- as.Date(profile1$became_member_on, format = "%Y%m%d")
+profile1$membership_duration <- as.numeric(difftime(Sys.Date(), profile1$became_member_on, units = "days"))
+profile1$membership_duration <- as.numeric(difftime(Sys.Date(), profile1$became_member_on, units = "days"))
+
+library(jsonlite)
+
+# Extract offer id from 'value' column
+transcript1$value <- gsub("'", "\"", transcript1$value)  # Replace single quotes with double quotes
+transcript1$offer_id <- sapply(transcript1$value, function(x) {
+  parsed_value <- fromJSON(x, simplifyVector = TRUE)
+  if (!is.null(parsed_value) && 'offer id' %in% names(parsed_value)) {
+    return(parsed_value[['offer id']])
+  } else {
+    return(NA)
+  }
+})
+
+# Create binary columns for different events
+transcript1$offer_received <- as.integer(transcript1$event == "offer received")
+transcript1$offer_viewed <- as.integer(transcript1$event == "offer viewed")
+transcript1$offer_completed <- as.integer(transcript1$event == "offer completed")
+transcript1$transaction <- as.integer(transcript1$event == "transaction")
+
+# Rename columns in the 'transcript' data frame
+transcript_new <- transcript_new %>%
+  rename(user_id = person)
+
+# Rename columns in the 'profile' data frame
+profile_new <- profile_new %>%
+  rename(user_id = id)
+
+# Left join on 'offer_id'
+full_df <- left_join(transcript_new, new_portfolio, by = 'offer_id')
+
+# Inner join on 'user_id'
+full_df <- inner_join(full_df, profile_new, by = 'user_id')
+
+head(new_portfolio)
+
+```
+
+### MERGED DATA
+
+```{r, results='markup'}
+# Merge profile and transcript datasets based on 'id' (customer ID)
+merged_data <- merge(profile1, transcript1, by.x = "id", by.y = "person", all.x = TRUE)
+
+merged_data <- merge(merged_data, portfolio, by.x = "offer_id", by.y = "id", all.x = TRUE)
+
+head(merged_data)
+```
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
