@@ -265,9 +265,112 @@ merged_data <- merge(merged_data, portfolio, by.x = "offer_id", by.y = "id", all
 head(merged_data)
 ```
 
-```{r}
+# EXPLORATORY DATA ANALYSIS
 
+
+## Age and Gender
+
+```{r, results='markup'}
+# Create a side-by-side boxplot and histogram
+par(mfrow = c(1, 2), mar = c(5, 4, 4, 2))
+boxplot(profile_new$age, xlab = "Age", main = "Boxplot", col = "lightblue")
+hist(profile_new$age, xlab = "Age", main = "Histogram", col = "lightblue")
+
+# Adjust axis label sizes
+par(cex.lab = 1.5)
+
+# Print descriptive statistics
+summary(profile_new$age)
+age_sd <- sd(profile_new$age)
+
+# Print the standard deviation
+cat("Standard Deviation of Age:", age_sd, "\n")
 ```
+
+1) The customer age range spans from 18 years as the youngest to 101 years as the oldest.
+
+2) The distribution of customer ages appears to approximate a normal distribution, with a mean and standard deviation of approximately 54 and 17, respectively.
+
+## Gender distribution.
+```{r, results='markup'}
+library(ggplot2)
+library(plotly)
+
+# Create a data frame with the count of each gender category
+gender_counts <- table(profile$gender)
+
+# Calculate percentages
+gender_percentages <- round((gender_counts / sum(gender_counts)) * 100, 1)
+
+# Define custom colors
+custom_colors <- c("#FF6F61", "#6B5B95", "#88B04B")  # You can use any color codes you like
+
+# Create the 3D pie chart
+pie_chart <- plot_ly(
+  labels = names(gender_counts),
+  values = gender_counts,
+  type = "pie",
+  textinfo = "label+percent",
+  marker = list(colors = custom_colors),
+  pull = c(0.1, 0.1, 0.2)  # Adjust pull for exploding wedges
+) %>%
+  layout(
+    title = "Gender Distribution",
+    scene = list(
+      aspectmode = "cube",  # Center the chart
+      camera = list(eye = list(x = 1.25, y = 1.25, z = 0.85))  # 3D view settings
+    ),
+    showlegend = FALSE
+  )
+
+# Display the 3D pie chart
+pie_chart
+```
+
+
+1) The customer base consists of a larger proportion of males (57.2%) compared to females (41.3%), with a minor representation (1.4%) from customers identifying with other genders.
+
+
+
+## Data distribution among different events.
+
+```{r, results='markup'}
+library(ezids)
+# Get value counts for the 'event' column
+event_value_counts <- table(transcript_new$event)
+# EDA on event occurences
+# Load the required libraries
+library(ggplot2)
+library(plotly)
+
+# Create a data frame from the event counts
+event_counts_df <- data.frame(event = names(event_value_counts), count = as.numeric(event_value_counts))
+
+# Define a vector of colors for  four events
+event_colors <- c("Coral", "Cyan", "Magenta", "Turquoise")
+
+# Create a ggplot2 bar chart 
+p <- ggplot(event_counts_df, aes(x = event, y = count, fill = event)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = event_colors) +
+  labs(title = "Event Distribution", x = "Event", y = "Count") +
+  theme_minimal() +
+  scale_y_continuous(breaks = seq(0, max(event_counts_df$count), by = 20000)) +
+  coord_flip() +
+  theme(panel.border = element_rect(color = "black", fill = NA),
+        panel.grid = element_blank(),
+        axis.text.x = element_text(face = "bold", color = "black"),
+        axis.text.y = element_text(face = "bold", color = "black")) 
+
+# Make the ggplot2 chart interactive using plotly
+interactive_plot <- ggplotly(p)
+
+# Display the interactive plot
+interactive_plot
+```
+
+As expected, not all recieved offers were viewed and not all recieved offers were completed. The dataset contains 45% transaction events and 55% offer events.
+
 
 
 
