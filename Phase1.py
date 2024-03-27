@@ -4,8 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import warnings
 warnings.filterwarnings("ignore")
-
-
+import seaborn as sns
 
 
 #%%
@@ -74,4 +73,64 @@ nan_counts = airline_df[cat_variables].isnull().sum()
 print("NaN counts in categorical variables:")
 print(nan_counts)
 
+# %%
+#drop unnecessary columns
+airline_df = airline_df.drop('Unnamed: 0', axis=1)
+airline_df = airline_df.drop('id', axis=1)
+airline_df.info()
+# %%
+# Distribution of data
+# Plot histogram
+airline_df.hist(bins=50, figsize=(20,15), color='lightseagreen', grid=True)
+plt.tight_layout()
+plt.show()
+
+
+
+# %%
+
+#Correlation matrix
+# Select only numeric columns
+numeric_df = airline_df.select_dtypes(include=['number'])
+corr_matrix = numeric_df.corr()
+
+# Create a heatmap to visualize the correlation matrix
+plt.figure(figsize=(20, 14)) 
+sns.set(font_scale=1.2) 
+
+# Create the heatmap with annotated values in each square
+sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', fmt=".2f", square=True)
+
+# Display the plot
+plt.title("Correlation Matrix")
+plt.show()
+# %%
+
+# What is the general level of satisfaction among passengers within the dataset?
+
+
+satisfaction_counts = airline_df['satisfaction'].value_counts()
+labels = satisfaction_counts.index
+sizes = satisfaction_counts.values
+
+# Define colors for the pie slices
+colors = ['lightcoral', 'paleturquoise']
+
+# Create the pie chart
+fig, ax = plt.subplots(figsize=(8, 6))
+patches, texts, autotexts = ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=120, pctdistance=0.85)
+
+# Adjust the legend
+legend_labels = [f"{label} ({size})" for label, size in zip(labels, sizes)]
+ax.legend(patches, legend_labels, loc='upper left', bbox_to_anchor=(1, 1, 0.5, 0.5))
+
+# Add a title
+plt.title('Passenger Satisfaction Levels')
+
+# # Adjust the plot layout to accommodate the legend
+# plt.subplots_adjust(right=0.7)
+
+plt.tight_layout()
+# Display the plot
+plt.show()
 # %%
