@@ -28,6 +28,7 @@ print("Features in the data:")
 for col, dtype in column_info:
     print(f"- {col}: {dtype}")
 
+
 # %%
 print("""Description of Features in the data:
 - Gender: Gender of the passengers (Female, Male)
@@ -54,14 +55,19 @@ print("""Description of Features in the data:
 - Arrival Delay in Minutes: Minutes delayed when Arrival
 - Satisfaction: Airline satisfaction level(Satisfaction, neutral or dissatisfaction)""")
 
+
 # %%
 #check null values
 
 airline_df.isnull().sum()
+
+
 # %%
 # Imputing missing value with mean
 airline_df['Arrival Delay in Minutes'] = airline_df['Arrival Delay in Minutes'].fillna(airline_df['Arrival Delay in Minutes'].mean())
 airline_df.isnull().sum()
+
+
 # %%
 # Check the list of categorical variables
 cat_variables = airline_df.select_dtypes(include=['object']).columns
@@ -73,11 +79,16 @@ nan_counts = airline_df[cat_variables].isnull().sum()
 print("NaN counts in categorical variables:")
 print(nan_counts)
 
+
+
 # %%
 #drop unnecessary columns
 airline_df = airline_df.drop('Unnamed: 0', axis=1)
 airline_df = airline_df.drop('id', axis=1)
 airline_df.info()
+
+
+
 # %%
 # Distribution of data
 # Plot histogram
@@ -104,6 +115,9 @@ sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', fmt=".2f", square=True)
 # Display the plot
 plt.title("Correlation Matrix")
 plt.show()
+
+
+
 # %%
 
 # What is the general level of satisfaction among passengers within the dataset?
@@ -133,4 +147,80 @@ plt.title('Passenger Satisfaction Levels')
 plt.tight_layout()
 # Display the plot
 plt.show()
+
+
+
+#%%
+
+#mapping the satisfaction column for analysis
+
+# Create a dictionary to map the values
+satisfaction_map = {'satisfied': 1, 'neutral or dissatisfied': 0}
+
+# Use map function to map values
+airline_df['Satisfaction_Coded'] = airline_df['satisfaction'].map(satisfaction_map)
+
+airline_df.head()
+
+
+
+
+
+
+
+# %%
+
+#What is the breakdown of passengers across different age groups, and how does age influence their level of satisfaction?
+
+
+# Define age bins and labels
+bins = [0, 13, 18, 26, 41, 66, 100]
+labels = ['0-12', '13-17', '18-25', '26-40', '41-65', '66+']
+labels_legend = ['0-12 Children', '13-17 Teenagers', '18-25 Young Adults', '26-40 Early-Middle-Aged',
+                 '41-65 Late-Middle-Aged', '66+ Seniors']
+airline_df['Age Group'] = pd.cut(airline_df['Age'], bins=bins, labels=labels, right=False)
+
+# Calculate age distribution
+age_data = airline_df['Age Group'].value_counts().sort_index()
+
+# Calculate the satisfaction rate for each Age Group
+airline_df_new = airline_df.groupby('Age Group')['Satisfaction_Coded'].mean().reset_index()
+
+# Rename the columns
+airline_df_new.columns = ['Age Group', 'Satisfaction Rate']
+
+
+
+# Create a subplot with 2 rows and 1 column
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(18, 20))
+
+# Plot the pie chart for age distribution
+# colors = ['#ff9999','#66b3ff','#99ff99','#ffcc99','#c2c2f0','#ffb3e6']
+colors = ['#1f77b4', '#aec7e8', '#6baed6', '#3182bd', '#08519c', '#084594']  
+ax1.pie(age_data, labels=labels, autopct='%1.1f%%', startangle=90, colors=colors)
+ax1.set_title('Passenger Age Distribution')
+ax1.legend(labels_legend, loc='upper left', bbox_to_anchor=(1, 1))
+
+
+# Plot the bar plot for satisfaction rate by age group
+# Define fading colors based on age
+fade_colors = ['#1f77b4', '#4477aa', '#66aabb', '#88bbcc', '#aaddcc', '#ccffcc']
+
+for i, (age_group, satisfaction_rate) in enumerate(zip(airline_df_new['Age Group'], airline_df_new['Satisfaction Rate'])):
+    ax2.bar(age_group, satisfaction_rate, color=fade_colors[i], label=age_group)
+    ax2.text(age_group, satisfaction_rate, f'{satisfaction_rate:.1%}', ha='center', va='bottom')
+
+ax2.set_title('Satisfaction Rate by Age Group')
+ax2.set_xlabel('Age Group')
+ax2.set_ylabel('Satisfaction Rate (%)')
+
+# Show plot
+plt.tight_layout()
+plt.show()
+
+
+
+# %%
+
+
 # %%
