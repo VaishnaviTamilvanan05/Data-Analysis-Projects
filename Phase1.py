@@ -222,5 +222,79 @@ plt.show()
 
 # %%
 
+airline_df['Age Group'] = pd.cut(airline_df['Age'], bins=bins, labels=labels, right=False)
+airline_df.head()
+
+#%%
+#class type influence on satisfaction 
+
+# Count the number of passengers in each age group and class
+age_class_count = airline_df.groupby(['Age Group', 'Class']).size().unstack(fill_value=0)
+
+# Define colors for each travel class
+colors = ['gold', 'dimgrey', 'saddlebrown']
+
+# Plot stacked bar plot
+sns.set_style("whitegrid")
+ax3 = age_class_count.plot(kind='bar', stacked=True, figsize=(10, 6), color=colors)
+ax3.set_title('Distribution of Travel Class by Age Group', fontsize=16)
+ax3.set_xlabel('Age Group', fontsize=14)
+ax3.set_ylabel('Number of Passengers', fontsize=14)
+ax3.legend(title='Travel Class', fontsize=12)
+
+# Add gridlines
+ax3.grid(axis='y', linestyle='--', alpha=0.7)
+
+
+# Adjust layout
+plt.tight_layout()
+
+# Show plot
+plt.show()
+
+
+
+# %%
+
+
+# Define gender categories and labels
+gender_labels = ['Female','Male']
+gender_labels_legend = ['Male', 'Female']
+
+# Calculate gender distribution
+gender_data = airline_df['Gender'].value_counts().sort_index()
+
+# Calculate the satisfaction rate for each Gender Group
+gender_df_new = airline_df.groupby('Gender')['Satisfaction_Coded'].mean().reset_index()
+
+# Rename the columns
+gender_df_new.columns = ['Gender', 'Satisfaction Rate']
+
+# Create a subplot with 2 rows and 1 column
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 10))
+
+# Plot the pie chart for gender distribution
+gender_colors = ['deepskyblue', 'orchid']
+ax1.pie(gender_data, labels=gender_labels, autopct='%1.1f%%', startangle=90, colors=gender_colors)
+ax1.set_title('Passenger Gender Distribution')
+ax1.legend(gender_labels_legend, loc='upper left', bbox_to_anchor=(1, 1))
+
+
+for i, (gender_group, satisfaction_rate) in enumerate(zip(gender_df_new['Gender'], gender_df_new['Satisfaction Rate'])):
+    ax2.bar(i, satisfaction_rate, color=gender_colors[i], label=gender_group)
+    ax2.text(i, satisfaction_rate, f'{satisfaction_rate:.1%}', ha='center', va='bottom')
+
+ax2.set_title('Satisfaction Rate by Gender Group')
+ax2.set_xlabel('Gender Group')
+ax2.set_ylabel('Satisfaction Rate (%)')
+
+# Set x-axis tick labels
+ax2.set_xticks(range(len(gender_labels)))
+ax2.set_xticklabels(gender_labels)
+
+# Show plot
+plt.tight_layout()
+plt.show()
+
 
 # %%
