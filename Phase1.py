@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 import warnings
 warnings.filterwarnings("ignore")
 import seaborn as sns
-
+import numpy as np
+from tabulate import tabulate
 
 #%%
 #read dataset and show the shape
@@ -296,5 +297,58 @@ ax2.set_xticklabels(gender_labels)
 plt.tight_layout()
 plt.show()
 
+
+# %%
+
+# Separating numeric and categorical columns
+numeric_cols = airline_df.select_dtypes(include=['int64', 'float64'])
+categorical_cols = airline_df.select_dtypes(include=['object'])
+
+# Calculate numeric statistics
+numeric_stats = numeric_cols.describe()
+numeric_stats.loc['median'] = numeric_cols.median()
+numeric_stats.loc['mode'] = numeric_cols.mode().iloc[0]
+
+# Calculate categorical statistics (mode and count)
+categorical_stats = categorical_cols.describe(include=['object'])
+categorical_stats.loc['mode'] = categorical_cols.mode().iloc[0]
+
+# Print the statistics in a table format using tabulate
+print("# Numeric Statistics of Dataset")
+print(tabulate(numeric_stats, headers='keys', tablefmt='psql', floatfmt=".2f"))
+
+print("\n# Categorical Statistics of Dataset")
+print(tabulate(categorical_stats, headers='keys', tablefmt='psql'))
+
+#%%
+#Distribution of each gender by satisfaction according to the mean of Flight Distance
+
+
+print("Mean Flight Distance by Gender and Satisfaction\n")
+airline_df.pivot_table(index='satisfaction',columns='Gender',values='Flight Distance',aggfunc='mean').style.background_gradient(cmap='BuGn').format("{:.2f}")
+
+
+# %%
+#Dist subplot
+# Set up the matplotlib figure
+fig, axes = plt.subplots(1, 2, figsize=(12, 5))  # 1 row, 2 columns
+
+# Plotting 'Arrival Delay in Minutes' on the first subplot
+sns.histplot(airline_df['Arrival Delay in Minutes'], bins=30, kde=False, ax=axes[0], label='Arrival Delay', color='blue')
+axes[0].set_title('Distribution of Arrival Delays')
+axes[0].set_xlabel('Delay in Minutes')
+axes[0].set_ylabel('Frequency')
+axes[0].legend()
+
+# Plotting 'Departure Delay in Minutes' on the second subplot
+sns.histplot(airline_df['Departure Delay in Minutes'], bins=30, kde=False, ax=axes[1], label='Departure Delay', color='green')
+axes[1].set_title('Distribution of Departure Delays')
+axes[1].set_xlabel('Delay in Minutes')
+axes[1].set_ylabel('Frequency')
+axes[1].legend()
+
+# Improve layout and display the plot
+plt.tight_layout()
+plt.show()
 
 # %%
