@@ -226,6 +226,35 @@ plt.subplots_adjust(top=0.9)
 # Display the plot
 plt.show()
 
+#%%
+##### Pie chart #####
+
+# What is the general level of satisfaction among passengers within the dataset?
+
+
+satisfaction_counts = airline_df['satisfaction'].value_counts()
+labels = satisfaction_counts.index
+sizes = satisfaction_counts.values
+
+# Define colors for the pie slices
+colors = ['lightcoral', 'paleturquoise']
+
+# Create the pie chart
+fig, ax = plt.subplots(figsize=(8, 6))
+patches, texts, autotexts = ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=120, pctdistance=0.85)
+
+# Adjust the legend
+legend_labels = [f"{label} ({size})" for label, size in zip(labels, sizes)]
+ax.legend(patches, legend_labels, loc='upper left', bbox_to_anchor=(1, 1, 0.5, 0.5))
+
+# Add a title
+plt.title('Passenger Satisfaction Levels', **title_font)
+
+plt.tight_layout()
+# Display the plot
+plt.show()
+
+
 
 #%%
 
@@ -315,89 +344,181 @@ plt.show()
 
 #################################################
 
+######## Heat Map - Correlation analysis ########
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# %%
-
-#Correlation matrix
-# Select only numeric columns
+# Select only numeric columns from the dataset
 numeric_df = airline_df.select_dtypes(include=['number'])
-corr_matrix = numeric_df.corr()
 
-# Create a heatmap to visualize the correlation matrix
-plt.figure(figsize=(20, 14)) 
-sns.set(font_scale=1.2) 
+# Calculate the correlation matrix
+corr = numeric_df.corr()
 
-# Create the heatmap with annotated values in each square
-sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', fmt=".2f", square=True)
+# Create a mask for the upper triangle
+mask = np.triu(np.ones_like(corr, dtype=bool))
 
-# Display the plot
-plt.title("Correlation Matrix")
-plt.show()
+# Set up the matplotlib figure
+f, ax = plt.subplots(figsize=(20, 20))
 
+# Generate a custom diverging colormap
+cmap = sns.diverging_palette(150, 275, as_cmap=True)
 
-
-# %%
-
-# What is the general level of satisfaction among passengers within the dataset?
-
-
-satisfaction_counts = airline_df['satisfaction'].value_counts()
-labels = satisfaction_counts.index
-sizes = satisfaction_counts.values
-
-# Define colors for the pie slices
-colors = ['lightcoral', 'paleturquoise']
-
-# Create the pie chart
-fig, ax = plt.subplots(figsize=(8, 6))
-patches, texts, autotexts = ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=120, pctdistance=0.85)
-
-# Adjust the legend
-legend_labels = [f"{label} ({size})" for label, size in zip(labels, sizes)]
-ax.legend(patches, legend_labels, loc='upper left', bbox_to_anchor=(1, 1, 0.5, 0.5))
+# Draw the heatmap with the mask and correct aspect ratio
+sns.heatmap(corr, mask=mask, cmap=cmap, vmax=None, center=0,
+            square=True, annot=True, linewidths=.5, cbar_kws={"shrink": .9})
 
 # Add a title
-plt.title('Passenger Satisfaction Levels')
-
-# # Adjust the plot layout to accommodate the legend
-# plt.subplots_adjust(right=0.7)
-
-plt.tight_layout()
-# Display the plot
+plt.title("Correlation Matrix", **title_font)
 plt.show()
 
 
 
 #%%
+##### Pivot Table #####
+
+numeric_column_for_counting = 'Age' 
+
+# Pivot tables for visualization
+pivot_tables = {
+    'Class': pd.pivot_table(airline_df, values=numeric_column_for_counting, index='Class', columns='satisfaction', aggfunc='count'),
+    'Customer Type': pd.pivot_table(airline_df, values=numeric_column_for_counting, index='Customer Type', columns='satisfaction', aggfunc='count'),
+    'Type of Travel': pd.pivot_table(airline_df, values=numeric_column_for_counting, index='Type of Travel', columns='satisfaction', aggfunc='count'),
+    'Gender': pd.pivot_table(airline_df, values=numeric_column_for_counting, index='Gender', columns='satisfaction', aggfunc='count')
+}
+
+# Plotting the pivot tables
+fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(16, 12))
+axes = axes.flatten()
+
+for i, (title, pivot_table) in enumerate(pivot_tables.items()):
+    sns.heatmap(pivot_table, annot=True, fmt="d", cmap="BuPu", ax=axes[i])
+    axes[i].set_title(f'{title} vs Satisfaction', fontsize=14)
+
+plt.suptitle('Passenger Satisfaction Multidimensional Analysis' , **title_font)
+plt.tight_layout()
+plt.show()
+
+
+
+#%% 
+
+#####Corss Tabulation#####
+# Perform cross-tabulation between 'Customer Type' and 'satisfaction'
+cross_customer_satisfaction = pd.crosstab(index=airline_df['Customer Type'], columns=airline_df['satisfaction'])
+
+# Convert the cross-tabulation to a DataFrame for plotting
+cross_customer_satisfaction_df = cross_customer_satisfaction.reset_index()
+
+# Melt the DataFrame for seaborn barplot
+cross_customer_satisfaction_melted = cross_customer_satisfaction_df.melt(id_vars='Customer Type', value_vars=cross_customer_satisfaction.columns)
+
+# Create the bar plot
+plt.figure(figsize=(10, 6))
+sns.barplot(data=cross_customer_satisfaction_melted, x='Customer Type', y='value', hue='satisfaction')
+
+# Add labels and title for presentation
+plt.title('Customer Satisfaction by Customer Type', fontsize=16)
+plt.xlabel('Customer Type', fontsize=12)
+plt.ylabel('Number of Passengers', fontsize=12)
+plt.legend(title='Satisfaction')
+
+# Show the plot
+plt.tight_layout()
+plt.show()
+
+
+# %%
+
+#####Comparitive Plots#############
+
+
+
+#Delay Impact Analysis
+
+# Setting up the plot with adjusted labels and legends
+plt.figure(figsize=(16, 8))
+
+# Scatter plot for Departure Delays vs Satisfaction
+plt.subplot(1, 2, 1)
+sns.regplot(x=airline_df['Departure Delay in Minutes'], y=airline_df['Satisfaction_Coded'], scatter_kws={'alpha':0.1}, line_kws={'color': 'red'})
+plt.title('Departure Delays vs. Passenger Satisfaction', **title_font)
+plt.xlabel('Departure Delay in Minutes', **label_font)
+plt.ylabel('Satisfaction Level', **label_font)
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.legend(['Trend Line', 'Data Points'],loc='lower left')
+
+# Scatter plot for Arrival Delays vs Satisfaction
+plt.subplot(1, 2, 2)
+sns.regplot(x=airline_df['Arrival Delay in Minutes'], y=airline_df['Satisfaction_Coded'], scatter_kws={'alpha':0.1}, line_kws={'color': 'red'})
+plt.title('Arrival Delays vs. Passenger Satisfaction', **title_font)
+plt.xlabel('Arrival Delay in Minutes', **label_font)
+plt.ylabel('Satisfaction Level', **label_font)
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.legend(['Trend Line', 'Data Points'], loc='lower left')
+
+# Show the plots
+plt.tight_layout()
+plt.show()
+
+
+#%%
+
+
+# Violin plot - boarding service
+
+ratings_columns = ['Ease of Online booking', 'Online boarding', 'On-board service',
+                   'Baggage handling', 'Checkin service']
+
+# Melt the DataFrame to get it in long-form for the ratings
+melted_df = airline_df.melt(id_vars=['Customer Type'], value_vars=ratings_columns, 
+                            var_name='Service', value_name='Rating')
+
+# Now create the violin plots
+plt.figure(figsize=(14, 8))
+sns.violinplot(x='Service', y='Rating', hue='Customer Type', data=melted_df, split=True, palette="muted")
+
+# Customize the plot for presentation
+plt.title('Boarding Service Ratings by Customer Type', **title_font)
+plt.xlabel('Service', **label_font)
+plt.ylabel('Rating', **label_font)
+# plt.xticks(rotation=45)
+
+# Place the legend outside the plot
+plt.legend(title='Customer Type', loc='center left', bbox_to_anchor=(1, 0.5))
+
+# Adjust the layout to make space for the legend
+plt.tight_layout(rect=[0, 0, 0.75, 1])
+
+plt.show()
+
+
+#%%
+
+#3d plots
+
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
+
+fig = plt.figure(figsize=(12, 8))
+ax = fig.add_subplot(111, projection='3d')
+# Create grid data for surface plot (you need to prepare this from the dataset)
+X = np.array(airline_df['Flight Distance'])
+Y = np.array(airline_df['Departure Delay in Minutes'])
+X, Y = np.meshgrid(X, Y)
+Z = np.random.rand(X.shape[0], X.shape[1])  # Replace with actual data for arrival delay
+surf = ax.plot_surface(X, Y, Z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+ax.set_xlabel('Flight Distance')
+ax.set_ylabel('Departure Delay in Minutes')
+ax.set_zlabel('Arrival Delay in Minutes')
+# Add a color bar which maps values to colors
+cbar = fig.colorbar(surf, shrink=0.5, aspect=5)
+cbar.set_label('Arrival Delay in Minutes')
+plt.title('Flight Distance vs Departure/Arrival Delay')
+plt.show()
+
+
+
+
+
+
 
 
 
