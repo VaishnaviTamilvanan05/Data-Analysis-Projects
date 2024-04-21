@@ -12,7 +12,8 @@ warnings.filterwarnings("ignore")
 import seaborn as sns
 import numpy as np
 from tabulate import tabulate
-
+from prettytable import PrettyTable
+from scipy.stats import skew, kurtosis
 
 
 #%%
@@ -98,7 +99,7 @@ airline_df.info()
 #Univariate Analysis
 
 #################################################
-
+#Tables
 ###### Summary Statistics ########
 
 # Separating numeric and categorical columns
@@ -114,78 +115,143 @@ numeric_stats.loc['mode'] = numeric_cols.mode().iloc[0]
 categorical_stats = categorical_cols.describe(include=['object'])
 categorical_stats.loc['mode'] = categorical_cols.mode().iloc[0]
 
-# Print the statistics in a table format using tabulate
-print("# Numeric Statistics of Dataset")
-print(tabulate(numeric_stats, headers='keys', tablefmt='psql', floatfmt=".2f"))
+# numeric statistics 
+numeric_table = PrettyTable()
+numeric_table.title = "Numeric Statistics of Dataset"
+numeric_table.field_names = ["Statistic"] + list(numeric_stats.columns)
 
-print("\n# Categorical Statistics of Dataset")
-print(tabulate(categorical_stats, headers='keys', tablefmt='psql'))
+
+for index, row in numeric_stats.iterrows():
+    formatted_row = [f"{value:.2f}" if isinstance(value, float) else value for value in row]
+    numeric_table.add_row([index] + formatted_row)
+
+# categorical statistics
+categorical_table = PrettyTable()
+categorical_table.title = "Categorical Statistics of Dataset"
+categorical_table.field_names = ["Statistic"] + list(categorical_stats.columns)
+for index, row in categorical_stats.iterrows():
+    categorical_table.add_row([index] + row.tolist())
+
+# Print the tables
+print(numeric_table)
+print("\n")
+print(categorical_table)
+
+
+#%%
+##Skewness & kurtosis
+
+# Calculate skewness and kurtosis for numerical variables
+numerical_columns = airline_df.select_dtypes(include=['int64', 'float64']).columns
+
+# Create a PrettyTable object
+table = PrettyTable()
+table.field_names = ["Variable", "Skewness", "Kurtosis"]
+table.title = "Skewness and Kurtosis Analysis"
+
+for column in numerical_columns:
+    column_skewness = skew(airline_df[column].dropna())
+    column_kurtosis = kurtosis(airline_df[column].dropna(), fisher=False)
+    table.add_row([column, f"{column_skewness:.2f}", f"{column_kurtosis:.2f}"])
+
+print(table)
+
 
 
 
 # %% 
-
-######## Distribution Plots ########
-
-# Distribution of data
-# Plot histogram
-
+#Visualization
 # Define title, xlabel, and ylabel settings
 title_font = {'fontname': 'serif', 'color': 'blue', 'fontsize': 16}
 label_font = {'fontname': 'serif', 'color': 'darkred', 'fontsize': 14}
 
+class_counts = airline_df['Class'].value_counts()
 
-# Generate histogram plot from DataFrame
-airline_df.hist(bins=50, figsize=(20,15), color='lightseagreen', grid=True)
-
-# Add a title for the entire plot
-plt.suptitle('Distribution of data', **title_font)
-
-# Adjust layout to prevent overlap
+# Plotting the pie chart
+plt.figure(figsize=(5, 5))
+plt.pie(class_counts, labels=class_counts.index, autopct='%1.1f%%', startangle=140)
+plt.title('Distribution of Passenger Class', **title_font)
+plt.legend()
 plt.tight_layout()
+plt.show()
 
-# Display the plot
+#%%
+
+########Histograms for numerical data########
+
+fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(14, 10))
+fig.suptitle('Key Trends in Passenger Experience and Flight Operations', **title_font)
+variables = {
+    'Age': ('Age Distribution', 0, 0, 'skyblue'),
+    'Flight Distance': ('Flight Distance Distribution', 0, 1, 'lightgreen'),
+    'Inflight wifi service': ('Inflight Wifi Service Rating', 1, 0, 'salmon'),
+    'Departure Delay in Minutes': ('Departure Delay Distribution', 1, 1, 'gold')
+}
+for var, (title, i, j, color) in variables.items():
+    airline_df[var].plot(kind='hist', bins=30, ax=axes[i, j], color=color, title=title)
+    axes[i, j].set_title(title, fontdict=title_font)
+    axes[i, j].set_xlabel(var, fontdict=label_font)
+    axes[i, j].set_ylabel('Frequency', fontdict=label_font)
+plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 plt.show()
 
 
+
+#%%
+#Box plot for outliers in delay
+
+# Create a figure and axes for subplot
+fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(10, 12))
+
+# Plotting the box plot for Departure Delay in Minutes
+axes[0].boxplot(airline_df['Departure Delay in Minutes'].dropna(), vert=False, patch_artist=True, boxprops=dict(facecolor='brown'))
+axes[0].set_title('Departure Delay Spread & Outliers', **title_font)
+axes[0].set_xlabel('Delay (Minutes)', **label_font)
+
+# Plotting the box plot for Arrival Delay in Minutes
+axes[1].boxplot(airline_df['Arrival Delay in Minutes'].dropna(), vert=False, patch_artist=True, boxprops=dict(facecolor='black'))
+axes[1].set_title('Arrival Delay Spread & Outliers', **title_font)
+axes[1].set_xlabel('Delay (Minutes)', **label_font)
+
+plt.tight_layout()
+plt.show()
 
 
 #%%
 
 
-# Set the aesthetic style of the plots
-sns.set_style("whitegrid")
+#pre-flight service categories
+# Data for pre-flight services to create a bar chart
+pre_flight_services = [
+    'Departure/Arrival time convenient', 
+    'Ease of Online booking', 
+    'Gate location', 
+    'Checkin service'
+]
 
-# Create a figure to hold the plots
-fig, axes = plt.subplots(2, 2, figsize=(16, 18))
+# Extracting these columns from the dataset
+pre_flight_data = airline_df[pre_flight_services]
+
+# Creating a  bar chart for each service rating
+plt.figure(figsize=(14, 8))
+for i, column in enumerate(pre_flight_services):
+    plt.subplot(2, 2, i+1)
+    sns.countplot(x=column, data=pre_flight_data, palette='coolwarm')
+    plt.title(f'Count of Ratings: {column}', **title_font)
+    plt.xlabel('Rating',**label_font)
+    plt.ylabel('Count',**label_font)
+    plt.tight_layout()
+
+plt.show()
 
 
 
-# List of variables to plot
-variables = ['Age', 'Flight Distance']
 
-# Create histograms and box plots for each variable
-for i, var in enumerate(variables):
-    # Histograms
-    sns.histplot(airline_df[var], kde=True, ax=axes[i, 0], color='skyblue')
-    axes[i, 0].set_title(f'Histogram of {var}', **title_font)
-    axes[i, 0].set_xlabel(var, **label_font)
-    axes[i, 0].set_ylabel('Frequency', **label_font)
 
-    # Box plots
-    sns.boxplot(x=airline_df[var], ax=axes[i, 1], color='lightgreen')
-    axes[i, 1].set_title(f'Box Plot of {var}', **title_font)
-    axes[i, 1].set_xlabel(var, **label_font)
-    axes[i, 1].set_ylabel('Value', **label_font)
 
-# Add a title for the entire plot
-fig.suptitle('Distribution of Data', **title_font)
 
-# Adjust layout to prevent overlap
-plt.tight_layout()
 
-# Adjust the gap between the overall title and the subplot titles
-plt.subplots_adjust(top=0.9)
+
 
 
 #%%
@@ -512,46 +578,6 @@ plt.ylabel('Number of Flights')
 plt.xticks(range(len(labels)), labels)  # Ensure x-ticks match the labels
 plt.grid(True)
 plt.show()
-
-
-
-
-
-
-
-
-# %%
-
-airline_df['Age Group'] = pd.cut(airline_df['Age'], bins=bins, labels=labels, right=False)
-airline_df.head()
-
-#%%
-#class type influence on satisfaction 
-
-# Count the number of passengers in each age group and class
-age_class_count = airline_df.groupby(['Age Group', 'Class']).size().unstack(fill_value=0)
-
-# Define colors for each travel class
-colors = ['gold', 'dimgrey', 'saddlebrown']
-
-# Plot stacked bar plot
-sns.set_style("whitegrid")
-ax3 = age_class_count.plot(kind='bar', stacked=True, figsize=(10, 6), color=colors)
-ax3.set_title('Distribution of Travel Class by Age Group', fontsize=16)
-ax3.set_xlabel('Age Group', fontsize=14)
-ax3.set_ylabel('Number of Passengers', fontsize=14)
-ax3.legend(title='Travel Class', fontsize=12)
-
-# Add gridlines
-ax3.grid(axis='y', linestyle='--', alpha=0.7)
-
-
-# Adjust layout
-plt.tight_layout()
-
-# Show plot
-plt.show()
-
 
 
 # %%
