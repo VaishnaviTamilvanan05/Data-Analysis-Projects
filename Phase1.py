@@ -492,28 +492,26 @@ plt.show()
 
 #%%
 
-#3d plots
 
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib import cm
+#area chart
 
-fig = plt.figure(figsize=(12, 8))
-ax = fig.add_subplot(111, projection='3d')
-# Create grid data for surface plot (you need to prepare this from the dataset)
-X = np.array(airline_df['Flight Distance'])
-Y = np.array(airline_df['Departure Delay in Minutes'])
-X, Y = np.meshgrid(X, Y)
-Z = np.random.rand(X.shape[0], X.shape[1])  # Replace with actual data for arrival delay
-surf = ax.plot_surface(X, Y, Z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
-ax.set_xlabel('Flight Distance')
-ax.set_ylabel('Departure Delay in Minutes')
-ax.set_zlabel('Arrival Delay in Minutes')
-# Add a color bar which maps values to colors
-cbar = fig.colorbar(surf, shrink=0.5, aspect=5)
-cbar.set_label('Arrival Delay in Minutes')
-plt.title('Flight Distance vs Departure/Arrival Delay')
+# Define distance categories
+bins = [0, 1000, 3000, 7000]  # Example thresholds for short, medium, and long-haul flights
+labels = ['Short-haul', 'Medium-haul', 'Long-haul']
+airline_df['Distance Category'] = pd.cut(airline_df['Flight Distance'], bins=bins, labels=labels, right=False)
+
+# Aggregate the data by 'Distance Category'
+category_counts = airline_df['Distance Category'].value_counts().reindex(labels)
+
+# Plotting
+fig, ax = plt.subplots(figsize=(12, 6))
+category_counts.plot(kind='area', ax=ax, color='skyblue', alpha=0.5)  # You can choose any color you like
+plt.title('Volume of Flights by Distance Category')
+plt.xlabel('Flight Distance Category')
+plt.ylabel('Number of Flights')
+plt.xticks(range(len(labels)), labels)  # Ensure x-ticks match the labels
+plt.grid(True)
 plt.show()
-
 
 
 
