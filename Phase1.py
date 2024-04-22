@@ -244,6 +244,34 @@ for i, column in enumerate(pre_flight_services):
 
 plt.show()
 
+#%%
+#in-flight services
+# Define the categories for in-flight services and their satisfaction variables
+in_flight_categories = {
+    'Entertainment Services': ['Inflight entertainment'],
+    'Comfort Services': ['Seat comfort', 'Leg room service'],
+    'Hospitality Services': ['Food and drink', 'On-board service', 'Cleanliness'],
+    'Connectivity and Handling Services': ['Inflight wifi service', 'Online boarding', 'Baggage handling', 'Inflight service']
+}
+
+# Create a function to plot stacked bar charts
+def plot_stacked_bar(categories, data):
+    plt.figure(figsize=(16, 10))
+    for i, (category, services) in enumerate(categories.items()):
+        plt.subplot(2, 2, i+1)
+        stacked_data = data[services].apply(lambda x: x.value_counts().sort_index(), axis=0)
+        stacked_data.plot(kind='bar', stacked=True, colormap='coolwarm', ax=plt.gca())
+        plt.title(f'Satisfaction for {category}', **title_font)
+        plt.xlabel('Rating', **label_font)
+        plt.ylabel('Count', **label_font)
+        plt.legend(title='Service', fontsize=10)
+        plt.xticks(rotation=0)
+        plt.tight_layout()
+
+# Call the function with the categories and data
+plot_stacked_bar(in_flight_categories, airline_df)
+plt.show()
+
 
 
 
