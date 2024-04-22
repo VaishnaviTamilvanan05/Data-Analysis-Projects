@@ -14,6 +14,8 @@ import numpy as np
 from tabulate import tabulate
 from prettytable import PrettyTable
 from scipy.stats import skew, kurtosis
+from statsmodels.graphics.gofplots import qqplot
+
 
 
 #%%
@@ -491,6 +493,245 @@ sns.jointplot(data=airline_df, x='Age', y='Flight Distance', kind='scatter', joi
 sns.jointplot(data=airline_df, x='Age', y='Flight Distance', kind='kde', color='blue')
 
 plt.show()
+
+#%%
+#Violin plots
+
+
+fig, axes = plt.subplots(2, 1, figsize=(12, 14))
+
+# Plot for Flight Distance by Type of Travel and Class without split
+sns.violinplot(ax=axes[0], x="Type of Travel", y="Flight Distance", hue="Class",
+               data=airline_df, palette="muted")
+axes[0].set_title('Flight Distance Distribution by Type of Travel and Class', **title_font)
+axes[0].set_xlabel('Type of Travel', **label_font)
+axes[0].set_ylabel('Flight Distance', **label_font)
+
+# Plot for Departure Delay by Type of Travel and Class without split
+sns.violinplot(ax=axes[1], x="Type of Travel", y="Departure Delay in Minutes", hue="Class",
+               data=airline_df, palette="muted")
+axes[1].set_title('Departure Delay Distribution by Type of Travel and Class', **title_font)
+axes[1].set_xlabel('Type of Travel', **label_font)
+axes[1].set_ylabel('Departure Delay in Minutes', **label_font)
+
+# Show the plots
+plt.tight_layout()
+plt.show()
+
+#%%
+
+
+# # Create a strip plot for Satisfaction vs. Travel Class
+# plt.figure(figsize=(10, 6))
+# strip_plot_class = sns.stripplot(x="Class", y="satisfaction", data=airline_df, jitter=True, dodge=True)
+# strip_plot_class.set_title('Passenger Satisfaction by Travel Class')
+# strip_plot_class.set_xlabel('Travel Class')
+# strip_plot_class.set_ylabel('Satisfaction')
+# plt.show()
+
+# # Create a strip plot for Satisfaction vs. Type of Travel
+# plt.figure(figsize=(10, 6))
+# strip_plot_travel_type = sns.stripplot(x="Type of Travel", y="satisfaction", data=airline_df, jitter=True, dodge=True)
+# strip_plot_travel_type.set_title('Passenger Satisfaction by Type of Travel')
+# strip_plot_travel_type.set_xlabel('Type of Travel')
+# strip_plot_travel_type.set_ylabel('Satisfaction')
+# plt.show()
+
+#%%
+
+pivot_table = pd.crosstab(index=[airline_df['Gender'], airline_df['Class'],airline_df['Customer Type']], columns=airline_df['Type of Travel'])
+
+# Generate the cluster map
+sns.clustermap(pivot_table, cmap='coolwarm', standard_scale=1)
+plt.show()
+
+#%%
+
+# QQ-plot 
+
+# Creating a figure and subplots
+fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(12, 10))  # Adjust the size as needed
+fig.suptitle('QQ-Plots for Key Features', fontsize=16)
+
+# List of features to plot
+features = ['Flight Distance', 'Departure Delay in Minutes', 'Arrival Delay in Minutes', 'Age']
+
+# Create QQ-plots for each feature
+for ax, feature in zip(axes.flatten(), features):
+    qqplot(airline_df[feature].dropna(), line='s', ax=ax)  # Drop NA values for clean plotting
+    ax.set_title(f'QQ-Plot for {feature}')
+
+# Improve layout to prevent overlap
+plt.tight_layout()
+plt.subplots_adjust(top=0.9)  # Adjust the top to make space for the suptitle
+plt.show()
+
+#%%
+##############################
+
+#Outlier detection & removal
+
+###############################
+
+
+
+# Function to calculate lower and upper bounds to identify outliers for a given column
+def find_outlier_bounds(column):
+    Q1 = column.quantile(0.25)
+    Q3 = column.quantile(0.75)
+    IQR = Q3 - Q1
+    lower_bound = Q1 - 1.5 * IQR
+    upper_bound = Q3 + 1.5 * IQR
+    return lower_bound, upper_bound
+
+# Applying the function to 'Flight Distance', 'Departure Delay in Minutes', 'Arrival Delay in Minutes', 'Age'
+bounds_flight_distance = find_outlier_bounds(airline_df['Flight Distance'])
+bounds_departure_delay = find_outlier_bounds(airline_df['Departure Delay in Minutes'])
+bounds_arrival_delay = find_outlier_bounds(airline_df['Arrival Delay in Minutes'])
+bounds_age = find_outlier_bounds(airline_df['Age'])
+
+# Removing outliers from the dataset based on the bounds calculated
+airline_data_filtered = airline_df[
+    (airline_df['Flight Distance'] >= bounds_flight_distance[0]) & (airline_df['Flight Distance'] <= bounds_flight_distance[1]) &
+    (airline_df['Departure Delay in Minutes'] >= bounds_departure_delay[0]) & (airline_df['Departure Delay in Minutes'] <= bounds_departure_delay[1]) &
+    (airline_df['Arrival Delay in Minutes'] >= bounds_arrival_delay[0]) & (airline_df['Arrival Delay in Minutes'] <= bounds_arrival_delay[1]) &
+    (airline_df['Age'] >= bounds_age[0]) & (airline_df['Age'] <= bounds_age[1])
+]
+
+
+#%%
+
+#Box plots
+# Defining features to plot
+features_to_plot = ['Flight Distance', 'Departure Delay in Minutes', 'Arrival Delay in Minutes', 'Age']
+
+# Create figure and axes for the subplots with assorted colors for each feature
+fig, axes = plt.subplots(nrows=2, ncols=len(features_to_plot), figsize=(20, 10))
+
+
+# Define colors for original and filtered data for better visual distinction
+colors_original = ['skyblue', 'lightgreen', 'lightcoral', 'wheat']
+colors_filtered = ['blue', 'green', 'red', 'goldenrod']
+
+# Original Data Boxplots with assorted colors
+for i, feature in enumerate(features_to_plot):
+    sns.boxplot(y=airline_df[feature], ax=axes[0, i], color=colors_original[i])
+    axes[0, i].set_title(f'Original {feature}')
+
+# Filtered Data Boxplots with assorted colors
+for i, feature in enumerate(features_to_plot):
+    sns.boxplot(y=airline_data_filtered[feature], ax=axes[1, i], color=colors_filtered[i])
+    axes[1, i].set_title(f'Filtered {feature}')
+
+# Setting the layout of the plots
+plt.tight_layout()
+plt.show()
+
+#%%
+
+#Lm plot reg
+
+# Creating a dual axis plot for 'Inflight wifi service' rating and 'Food and drink' satisfaction against 'Age'
+
+# Initialize the matplotlib figure
+fig, ax1 = plt.subplots(figsize=(10, 6))
+
+# Create a reg plot for 'Inflight wifi service' rating vs 'Age' on the first axis
+sns.regplot(x='Age', y='Inflight wifi service', data=airline_data_filtered, ax=ax1, scatter_kws={'alpha':0.3}, line_kws={'color': 'orange'})
+ax1.set_title('Age vs Services Rating', **title_font)
+ax1.set_xlabel('Age')
+ax1.set_ylabel('Inflight Wifi Service Rating', **label_font)
+ax1.tick_params(axis='y', labelcolor='blue')
+
+# Create a second axis sharing the same x-axis
+ax2 = ax1.twinx()
+
+# Create a reg plot for 'Food and drink' satisfaction vs 'Age' on the second axis
+sns.regplot(x='Age', y='Food and drink', data=airline_data_filtered, ax=ax2, scatter_kws={'alpha':0.3}, line_kws={'color': 'green'})
+ax2.set_ylabel('Food and Drink Satisfaction Rating', **label_font)
+ax2.tick_params(axis='y', labelcolor='green')
+
+# Show the plot
+plt.tight_layout()
+plt.show()
+
+
+
+#%%
+
+
+
+# We will analyze the willingness to pay for inflight wifi service based on the Travel Class and Flight Distance
+# Here, we use a hexbin plot which is suitable for showing the relationship between two numerical variables with many points.
+
+# Convert Travel Class to an ordered categorical type to assist in visualization
+airline_data_filtered['Class'] = airline_data_filtered['Class'].astype('category')
+airline_data_filtered['Class'].cat.set_categories(['Eco', 'Eco Plus', 'Business'], ordered=True)
+
+# Hexbin plot of Flight Distance and Inflight wifi service rating colored by Travel Class
+plt.figure(figsize=(10, 6))
+plt.hexbin(airline_data_filtered['Flight Distance'], airline_data_filtered['Inflight wifi service'],
+           gridsize=30, cmap='Blues', bins='log')
+plt.colorbar(label='log10(N)')
+plt.xlabel('Flight Distance')
+plt.ylabel('Inflight Wifi Service Rating')
+plt.title('Hexbin of Flight Distance and Inflight Wifi Service Rating')
+plt.show()
+
+# Now let's visualize with a 3D plot for the three variables: Age, Flight Distance and Inflight wifi service
+from mpl_toolkits.mplot3d import Axes3D
+
+fig = plt.figure(figsize=(12, 8))
+ax = fig.add_subplot(111, projection='3d')
+
+# Color by class with a dictionary
+color_dict = {'Eco':'blue', 'Eco Plus':'orange', 'Business':'green'}
+class_colors = airline_data_filtered['Class'].map(color_dict)
+
+sc = ax.scatter(airline_data_filtered['Age'], airline_data_filtered['Flight Distance'], airline_data_filtered['Inflight wifi service'], c=class_colors, s=5)
+ax.set_xlabel('Age')
+ax.set_ylabel('Flight Distance')
+ax.set_zlabel('Inflight Wifi Service Rating')
+
+# Create a legend for the colors
+custom_lines = [plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=v, markersize=10) for k, v in color_dict.items()]
+ax.legend(custom_lines, color_dict.keys(), title="Travel Class")
+
+plt.title('3D Scatter Plot of Age, Flight Distance and Inflight Wifi Service Rating by Travel Class')
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 #%%
