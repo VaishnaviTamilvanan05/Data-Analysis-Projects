@@ -438,6 +438,26 @@ plt.show()
 
 #################################################
 
+#%%
+
+######Pair plot 
+variables = ['Age', 'Flight Distance', 'Inflight wifi service', 
+             'Seat comfort', 'Cleanliness', 'Departure Delay in Minutes', 
+             'Arrival Delay in Minutes', 'satisfaction']
+simplified_pairplot_df = airline_df[variables]
+
+# Create and show the pair plot with 'satisfaction' as the hue
+simplified_pair_plot = sns.pairplot(simplified_pairplot_df, hue='satisfaction', diag_kind='hist', 
+                                    plot_kws={'alpha':0.6, 's':30, 'edgecolor':'k'}, height=2.5)
+simplified_pair_plot.fig.subplots_adjust(top=0.93)
+simplified_pair_plot.fig.suptitle('Pair Plot of Key Features with Satisfaction Hue', fontsize=16)
+plt.show()
+
+
+
+
+#%%
+
 ######## Heat Map - Correlation analysis ########
 
 # Select only numeric columns from the dataset
@@ -463,6 +483,14 @@ sns.heatmap(corr, mask=mask, cmap=cmap, vmax=None, center=0,
 plt.title("Correlation Matrix", **title_font)
 plt.show()
 
+#%%
+
+#Joint Plot with KDE and scatter representation
+# Create a Joint Plot with KDE and scatter representation
+sns.jointplot(data=airline_df, x='Age', y='Flight Distance', kind='scatter', joint_kws={'alpha': 0.6})
+sns.jointplot(data=airline_df, x='Age', y='Flight Distance', kind='kde', color='blue')
+
+plt.show()
 
 
 #%%
