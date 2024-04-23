@@ -2,9 +2,12 @@ import dash
 import dash.html as html
 from dash import dcc
 import pandas as pd
+from dash import html, dcc
+from dash.dependencies import Input, Output
 from dash import html, dcc, Input, Output, State
 import plotly.express as px
 import plotly.graph_objects as go
+import dash_table
 
 #read dataset transformed
 df = pd.read_csv('/Users/vaishnavitamilvanan/Documents/Spring 2024/Visualization/Project/Visualization-of-Complex-Data-DATS-6401/Airline_passenger_data_cleaned.csv')
@@ -78,20 +81,99 @@ selected_tab_style = {'backgroundColor': '#007bff', 'color': 'white'}
 div_style = {
     'margin': '20px', 
     'padding': '20px', 
-    'backgroundColor': '#f8f9fa',  # Light grey background for sections
-    'borderRadius': '5px',  # Rounded corners for divs
-    'boxShadow': '0 2px 4px rgba(0,0,0,0.1)'  # Subtle shadow for depth
+    'backgroundColor': 'rgba(0,0,0,0)',
+    'borderRadius': '5px',
+    'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
+    'minHeight': '700px'  # Ensure all main divs have at least 500px height
 }
+
 #############################
 #Tab-info layout
 # Define layouts for tabs
 tab_info_layout = html.Div([
     html.H3('Dataset Overview', style=text_style),
     html.P(dataset_info, style=text_style),
-    # dcc.Checkbox(id='show-column-info', value=False, label='Show Column Information'),
-    # html.Div(id='column-info-display')
-], style=div_style)
+    html.H3('Features Information', style=text_style),
+    html.H4('There are 25 columns in total. Select an option to display feature information:', style=text_style),
+    dcc.RadioItems(
+        id='feature-selection',
+        options=[
+            {'label': 'Display Feature Description', 'value': 'desc'},
+            {'label': 'Display Datatype Info', 'value': 'info'},
+            {'label': 'None', 'value': 'none'}
+        ],
+        value='none',  # Default to none selected
+        labelStyle={'display': 'block'}
+    ),
+    html.Div(id='feature-info-display'),
+    html.H4('This dataset is available for download on Kaggle:'),
+    html.A(
+        html.Button('Click here to check Dataset', id='download-button'),
+        href='https://www.kaggle.com/datasets/teejmahal20/airline-passenger-satisfaction',  # Replace this URL with the actual URL of your dataset
+          
+    )
+],style=div_style)
 
+# Define callback for showing feature descriptions or summary statistics
+@app.callback(
+    Output('feature-info-display', 'children'),
+    [Input('feature-selection', 'value')]
+)
+def update_display(selected_option):
+    if selected_option == 'desc':
+        return html.Div([
+            html.H4('Description of Features in the data:'),
+            html.Ul([
+                html.Li('Gender: Gender of the passengers (Female, Male)'),
+                html.Li('Customer Type: The customer type (Loyal customer, disloyal customer)'),
+                html.Li('Age: The actual age of the passengers'),
+        html.Li('Type of Travel: Purpose of the flight of the passengers (Personal Travel, Business Travel)'),
+        html.Li('Class: Travel class in the plane of the passengers (Business, Eco, Eco Plus)'),
+        html.Li('Flight distance: The flight distance of this journey'),
+        html.Li('Inflight wifi service: Satisfaction level of the inflight wifi service (0:Not Applicable; 1-5)'),
+        html.Li('Departure/Arrival time convenient: Satisfaction level of Departure/Arrival time convenient'),
+        html.Li('Ease of Online booking: Satisfaction level of online booking'),
+        html.Li('Gate location: Satisfaction level of Gate location'),
+        html.Li('Food and drink: Satisfaction level of Food and drink'),
+        html.Li('Online boarding: Satisfaction level of online boarding'),
+        html.Li('Seat comfort: Satisfaction level of Seat comfort'),
+        html.Li('Inflight entertainment: Satisfaction level of inflight entertainment'),
+        html.Li('On-board service: Satisfaction level of On-board service'),
+        html.Li('Leg room service: Satisfaction level of Leg room service'),
+        html.Li('Baggage handling: Satisfaction level of baggage handling'),
+        html.Li('Check-in service: Satisfaction level of Check-in service'),
+        html.Li('Inflight service: Satisfaction level of inflight service'),
+        html.Li('Cleanliness: Satisfaction level of Cleanliness'),
+        html.Li('Departure Delay in Minutes: Minutes delayed at departure'),
+        html.Li('Arrival Delay in Minutes: Minutes delayed at arrival'),
+        html.Li('Satisfaction: Airline satisfaction level (Satisfaction, neutral, or dissatisfaction)')
+            ])
+        ])
+    elif selected_option == 'info':
+        # Check the data types of each column
+        categorical = [col for col in airline_df.columns if airline_df[col].dtype == 'object']
+        numerical = [col for col in airline_df.columns if airline_df[col].dtype in ['int64', 'float64']]
+        
+        # Create HTML components for each type of data
+        numerical_features = html.Ul([html.Li(f'{feature}: Numerical') for feature in numerical])
+        categorical_features = html.Ul([html.Li(f'{feature}: Categorical') for feature in categorical])
+
+        return html.Div([
+            html.H4('Data Types of Features:'),
+            html.Div([
+                html.Div([
+                    html.H5('Numerical Features:'),
+                    numerical_features
+                ], style={'width': '50%', 'display': 'inline-block', 'vertical-align': 'top'}),
+                html.Div([
+                    html.H5('Categorical Features:'),
+                    categorical_features
+                ], style={'width': '50%', 'display': 'inline-block', 'vertical-align': 'top'})
+            ])
+        ])
+    
+    return''
+    
 
 ###################################################################################
 #tab1 layout
@@ -143,7 +225,13 @@ tab_customer_experience_layout = html.Div([
      State('gender-selection-store', 'data')]
 )
 
+
+
+
+
 def update_graph_based_on_inputs(clickData_gender, satisfaction_value, customer_type, clickData_class, donut_figure, bar_figure, stored_data):
+    
+    
     # Initialize selected variables
     selected_gender = None
     selected_class = None
@@ -241,7 +329,9 @@ app.layout = html.Div(style={
     'backgroundSize': 'cover',
     'backgroundPosition': 'center',
     'backgroundRepeat': 'no-repeat',
-    'height': '100vh',
+    'backgroundAttachment': 'fixed',  # Ensures the image does not scroll with the content
+    'minHeight': '100vh',  # Minimum height to cover the full viewport height
+    'height': 'auto',  # Adjusts height based on content
     'display': 'flex',
     'flexDirection': 'column',
     'justifyContent': 'space-between'
