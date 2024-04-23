@@ -704,7 +704,10 @@ plt.show()
 
 
 
+#%%
+#save file to csv
 
+airline_data_filtered.to_csv('/Users/vaishnavitamilvanan/Documents/Spring 2024/Visualization/Project/Visualization-of-Complex-Data-DATS-6401/Airline_passenger_data_cleaned.csv', index=False)
 
 
 
