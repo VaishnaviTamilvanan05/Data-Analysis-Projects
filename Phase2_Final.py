@@ -15,7 +15,7 @@ from scipy.stats import normaltest
 import dash_bootstrap_components as dbc
 import numpy as np
 
-
+import plotly.figure_factory as ff
 
 
 
@@ -159,7 +159,7 @@ def create_gender_distribution_chart(df,selected_gender=None):
                                  hole=0.4, textinfo='label+percent', marker=dict(colors=px.colors.sequential.Blues_r))])
     fig.update_traces(textposition='inside')
     fig.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-                      showlegend=False, margin=dict(t=50, l=25, r=25, b=25))
+                      showlegend=True, margin=dict(t=50, l=25, r=25, b=25))
     return fig
 
 
@@ -187,7 +187,7 @@ def create_class_distribution_chart(df, selected_class=None,selected_gender=None
         yaxis={'title': 'Class'},
         margin=dict(t=20, b=20),
         height=300,
-        width=700
+        width=700,
     )
     return fig
 
@@ -400,6 +400,7 @@ def update_graph_based_on_inputs(clickData_gender, satisfaction_value, customer_
 
 
 
+
     # Update the satisfaction counts
     local_satisfaction_counts = filtered_df['satisfaction'].value_counts().to_dict()
     new_options = [
@@ -484,7 +485,7 @@ def perform_test(selected_column, selected_test):
 
 #############################################################################
 
-
+##########################################################################
 #TAb4 -operational services insights
 
 tab_operational_insights_layout = html.Div([
@@ -519,6 +520,7 @@ tab_operational_insights_layout = html.Div([
     html.Br(),
     html.Div(id='charts-container')
 ], style=div_style)
+
 
 
 @app.callback(
@@ -619,7 +621,249 @@ def update_output(n_clicks, pre_flight_selected, in_flight_selected):
             row_children.append(col)
 
     return dbc.Row(row_children)  # Return a row with all columns (charts)
+###############################################################################
 
+
+#range and heatmap
+
+
+
+# Bin the delays into categories
+bins = [-1, 0, 19, float('inf')]
+labels = ['No delay', '1 to 19', '≥ 20 mins delay']
+
+# Apply the binning
+df['Departure Delay Category'] = pd.cut(df['Departure Delay in Minutes'], bins=bins, labels=labels)
+df['Arrival Delay Category'] = pd.cut(df['Arrival Delay in Minutes'], bins=bins, labels=labels)
+
+# Create a new DataFrame for satisfied customers
+df_satisfied = df[df['satisfaction'] == 'satisfied']
+
+# Group by the new categories and count, passing observed=True to avoid the FutureWarning
+grouped = df_satisfied.groupby(['Arrival Delay Category', 'Departure Delay Category'], observed=True).size().reset_index(name='Count')
+
+# Pivot using keyword arguments
+pivot_table = grouped.pivot(index='Arrival Delay Category', columns='Departure Delay Category', values='Count')
+
+
+# Create the heatmap
+fig = ff.create_annotated_heatmap(z=pivot_table.to_numpy(), 
+                                  x=pivot_table.columns.tolist(), 
+                                  y=pivot_table.index.tolist(), 
+                                  annotation_text=pivot_table.round(2).astype(str).values, 
+                                  colorscale='oranges')
+
+# Update the layout to match your specifications
+fig.update_layout(
+    title='Satisfaction Count for Departure and Arrival Delays',
+    xaxis_title='Departure Delay',
+    yaxis_title='Arrival Delay',
+    xaxis={'side': 'top'},
+    yaxis=dict(autorange='reversed'),  # To match the traditional matrix layout
+    paper_bgcolor='rgba(0,0,0,0)',  # Transparent background
+    plot_bgcolor='rgba(0,0,0,0)'  # Transparent background
+)
+
+
+
+
+
+
+
+
+
+
+# Reducing the number of unique marks for clarity and performance
+unique_distances = np.sort(df['Flight Distance'].unique())
+marks = {str(distance): str(distance) for distance in np.linspace(unique_distances.min(), unique_distances.max(), num=10, dtype=int)}
+
+#Flight Metrics Explorer layout
+
+tab_flight_metrics_layout= html.Div([
+    html.H4('Select flight distance range:'),
+    html.Br(),
+    dcc.RangeSlider(
+        id='distance-slider',
+        min=df['Flight Distance'].min(),
+        max=df['Flight Distance'].max(),
+        value=[df['Flight Distance'].min(), df['Flight Distance'].max()],
+        marks=marks,
+        step=100
+    ),
+    html.Br(),
+    html.Br(),
+    html.Div(id='output-container-range-slider'),
+    html.Br(),
+    dcc.Loading(
+        id="loading-1",
+        type="default",
+        children=html.Div(id='loading-output-1')
+    ),
+    html.Br(),
+    dcc.Graph(id='satisfaction-graph')
+],style=div_style)
+
+tab_flight_metrics_layout.children.append(html.Div([dcc.Graph(figure=fig)]))
+# Callbacks to update graphs
+
+@app.callback(
+    [
+        Output('satisfaction-graph', 'figure'),
+        Output('output-container-range-slider', 'children'),
+        Output('loading-output-1', 'children')
+    ],
+    [Input('distance-slider', 'value')]
+)
+def update_graph(selected_range):
+    filtered_df = df[(df['Flight Distance'] >= selected_range[0]) & (df['Flight Distance'] <= selected_range[1])]
+    
+    if filtered_df.empty:
+        no_data_fig = {
+            'data': [],
+            'layout': {
+                'xaxis': {'visible': False},
+                'yaxis': {'visible': False},
+                'paper_bgcolor': 'rgba(0,0,0,0)',  # Set to transparent
+                'plot_bgcolor': 'rgba(0,0,0,0)',  # Set to transparent
+                'annotations': [{'text': 'No data available for the selected range', 'x': 0.5, 'y': 0.5, 'showarrow': False, 'font': {'size': 16, 'color': 'white'}}]
+            }
+        }
+        return [no_data_fig, f'No data for range: {selected_range}', 'No data to display']
+
+    # Calculate counts of satisfaction levels
+    satisfaction_counts = filtered_df.groupby('satisfaction').size().reset_index(name='count')
+
+    # Satisfaction Graph (Updated to Bar Chart)
+    fig_satisfaction = px.bar(satisfaction_counts, x='satisfaction', y='count', title="Satisfaction Levels Count",
+                              text='count', color='satisfaction',  # Assign color based on 'satisfaction'
+                              category_orders={"satisfaction": sorted(satisfaction_counts['satisfaction'].unique())})  # Sort satisfaction categories
+
+    fig_satisfaction.update_layout(
+        xaxis_title="Satisfaction",
+        yaxis_title="Count",
+        paper_bgcolor='rgba(0,0,0,0)',  # Set to transparent
+        plot_bgcolor='rgba(0,0,0,0)',  # Set to transparent
+        font_color="steelblue",
+        legend_title_text='Satisfaction Level'  # Add title to legend
+    )
+    fig_satisfaction.update_traces(texttemplate='%{text}', textposition='outside')
+
+    return [fig_satisfaction, f'Showing results for range: {selected_range}', 'Data loaded']
+
+######################################################################
+
+
+#Demographic insights
+
+#mapping the satisfaction column for analysis
+# Create a dictionary to map the values
+satisfaction_map = {'satisfied': 1, 'neutral or dissatisfied': 0}
+# Use map function to map values
+airline_df['Satisfaction_Coded'] = airline_df['satisfaction'].map(satisfaction_map)
+
+# Define age bins and labels
+bins = [0, 13, 18, 26, 41, 66, 100]
+labels = ['0-12', '13-17', '18-25', '26-40', '41-65', '66+']
+labels_legend = ['0-12 Children', '13-17 Teenagers', '18-25 Young Adults', '26-40 Early-Middle-Aged',
+                 '41-65 Late-Middle-Aged', '66+ Seniors']
+airline_df['Age Group'] = pd.cut(airline_df['Age'], bins=bins, labels=labels, right=False)
+
+# Calculate age distribution
+age_data = airline_df['Age Group'].value_counts().sort_index()
+
+# Calculate the satisfaction rate for each Age Group
+airline_df_new = airline_df.groupby('Age Group')['Satisfaction_Coded'].mean().reset_index()
+
+# Rename the columns
+airline_df_new.columns = ['Age Group', 'Satisfaction Rate']
+
+#Demographic insights
+
+
+# Prepare your initial pie chart and bar graph figures
+fig_pie_initial = px.pie(airline_df, names='Age Group', title='Passenger Age Distribution')
+fig_pie_initial.update_layout(
+        paper_bgcolor='rgba(0,0,0,0)',  # Set to transparent
+        plot_bgcolor='rgba(0,0,0,0)'    # Set to transparent
+    )
+fig_bar_initial = px.bar(airline_df_new, x='Age Group', y='Satisfaction Rate', title='Satisfaction Rate by Age Group',
+                         )
+
+tab_demographic_insights_layout = html.Div([
+    html.H1('Passenger Age and Satisfaction Analysis'),
+    dcc.Graph(id='age-distribution-pie', figure=fig_pie_initial),
+    dcc.Graph(id='satisfaction-rate-bar', figure=fig_bar_initial),
+])
+
+@app.callback(
+    Output('satisfaction-rate-bar', 'figure'),
+    [Input('age-distribution-pie', 'clickData')],
+    # [State('satisfaction-rate-bar', 'figure')]
+)
+def highlight_selected_age_group(pie_click_data):
+    # Create a new figure for the bar graph based on the updated data frame
+    fig_bar = px.bar(
+        airline_df_new,
+        x='Age Group',
+        y='Satisfaction Rate',
+        title='Satisfaction Rate by Age Group',
+        text_auto=True  # Display count of each bar on top
+    )
+    
+    # Set default colors for all bars
+    colors = ['lightskyblue'] * len(airline_df_new['Age Group'])
+    
+    # If a part of the pie chart was clicked, update the bar color of the selected age group
+    if pie_click_data:
+        # Get the age group that was clicked
+        age_group_clicked = pie_click_data['points'][0]['label']
+        
+        # Find the index of the clicked age group and change its color to green
+        if age_group_clicked in airline_df_new['Age Group'].values:
+            clicked_index = airline_df_new['Age Group'].tolist().index(age_group_clicked)
+            colors[clicked_index] = 'green'  # Set the selected age group bar to green
+
+    # Update the bar chart with the new colors list
+    fig_bar.update_traces(marker_color=colors)
+
+    # Set the background to transparent
+    fig_bar.update_layout(
+        paper_bgcolor='rgba(0,0,0,0)',  # Set to transparent
+        plot_bgcolor='rgba(0,0,0,0)'    # Set to transparent
+    )
+
+    return fig_bar
+
+#####################################################################
+
+tab_feedback_summary_layout=html.Div([
+    html.H1('Summary of Insights'),
+    html.P('Here you can provide a detailed summary of the insights derived from the analysis.'),
+
+    html.H2('About the Author'),
+    html.P('This section can include a brief bio of the author, their qualifications, and any relevant background information.'),
+
+    html.H2('Feedback'),
+    html.P('Please provide your suggestions for improvements or additional features you would like to see:'),
+    dcc.Textarea(
+        id='feedback-textarea',
+        style={'width': '100%', 'height': 200},
+        placeholder='Enter your feedback here...'
+    ),
+
+    html.Button('Submit Feedback', id='submit-feedback', n_clicks=0),
+    html.Div(id='feedback-response')
+], style=div_style)
+
+@app.callback(
+    Output('feedback-response', 'children'),
+    Input('submit-feedback', 'n_clicks'),
+    [State('feedback-textarea', 'value')]
+)
+def update_output(n_clicks, value):
+    if n_clicks > 0:
+        return 'Thank you for your feedback!'
+    return ''
 
 
 ######################################################################
@@ -643,11 +887,14 @@ app.layout = html.Div(style={
         'fontWeight': '500'
     }),
     html.Br(),
-    dcc.Tabs(id='finalproject', children=[
+    dcc.Tabs(id='finalproject', value='tab-info', children=[
         dcc.Tab(label='Dataset Information', value='tab-info'),
         dcc.Tab(label='Customer Experience Overview', value='tab-1'),
         dcc.Tab(label='Normality Tests', value='tab-2'),
-        dcc.Tab(label='Operational Insights', value='tab-3')
+        dcc.Tab(label='Operational Insights', value='tab-3'),
+        dcc.Tab(label='Flight Metrics Explorer', value='tab-4'),
+        dcc.Tab(label='Demographic Insights', value='tab-5'),
+        dcc.Tab(label='Feedback & Summary', value='tab-6')
     ]),
     html.Div(id='layout')
 ])
@@ -666,6 +913,12 @@ def update_layout(tab_name):
         return tab_normality_tests_layout
     elif tab_name == 'tab-3':
         return tab_operational_insights_layout
+    elif tab_name == 'tab-4':
+        return tab_flight_metrics_layout
+    elif tab_name == 'tab-5':
+        return tab_demographic_insights_layout
+    elif tab_name == 'tab-6':
+        return tab_feedback_summary_layout
     else:
         return html.Div()  # Default return if no tab matches
 
