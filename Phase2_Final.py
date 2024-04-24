@@ -18,11 +18,6 @@ import plotly.figure_factory as ff
 
 
 
-
-
-
-
-
 #read dataset transformed
 df = pd.read_csv('/Users/vaishnavitamilvanan/Documents/Spring 2024/Visualization/Project/Visualization-of-Complex-Data-DATS-6401/Airline_passenger_data_cleaned.csv')
 # Read dataset orginal
@@ -540,7 +535,7 @@ def update_output(n_clicks, pre_flight_selected, in_flight_selected):
     if n_clicks is None:
         return "Please select services and click submit."
 
-    row_children = []  # This will hold all the column components for the row
+    row_children = []  
 
     # Calculate the number of total services selected
     total_services = len(pre_flight_selected) + len(in_flight_selected)
@@ -622,7 +617,7 @@ def update_output(n_clicks, pre_flight_selected, in_flight_selected):
             col = dbc.Col(dcc.Graph(figure=fig), width=column_width)
             row_children.append(col)
 
-    return dbc.Row(row_children)  # Return a row with all columns (charts)
+    return dbc.Row(row_children)  
 ###############################################################################
 
 
@@ -893,12 +888,25 @@ app.layout = html.Div(style={
     'flexDirection': 'column',
     'justifyContent': 'space-between'
 }, children=[
-    html.H1("Airline Passenger Satisfaction Dashboard", style={
-        'textAlign': 'center',
-        'marginTop': '20px',
-        'fontFamily': 'Roboto, sans-serif',
-        'fontWeight': '500'
-    }),
+            html.Div(  # This div will act as a flex container for the image and heading
+    style={
+        'display': 'flex',
+        'alignItems': 'center',
+        'justifyContent': 'center',  # Adjust this to 'flex-start' to align items to the left
+        'marginTop': '10px',
+    },
+    children=[
+        html.Img(src='/assets/flight_image.png', style={
+            'height': '60px',  # Set the image height to be small
+            'marginRight': '20px',  # Add some space between the image and the heading
+        }),
+        html.H1("Airline Passenger Satisfaction Dashboard", style={
+            'fontFamily': 'Roboto, sans-serif',
+            'fontWeight': '500',
+        }),
+    ]
+),
+
     html.Br(),
     dcc.Tabs(id='finalproject', value='tab-info', children=[
         dcc.Tab(label='Dataset Information', value='tab-info'),
