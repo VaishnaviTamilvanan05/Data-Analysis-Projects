@@ -131,10 +131,16 @@ in_flight_categories = {
     'Connectivity and Handling Services': ['Inflight wifi service', 'Online boarding', 'Baggage handling', 'Inflight service']
 }
 
+operational_insights_tab_info = """
+This dashboard utilizes checkboxes to enable the selection of specific pre-flight and in-flight services, allowing for tailored analysis crucial to enhancing passenger experiences. The in-flight services are grouped into four main categories:
 
+1. **Entertainment Services:** Focuses on 'Inflight entertainment' to enhance enjoyment through various media options.
+2. **Comfort Services:** Includes 'Seat comfort' and 'Leg room service', key to physical comfort and reducing travel fatigue.
+3. **Hospitality Services:** Covers 'Food and drink', 'On-board service', and 'Cleanliness', impacting the overall perception of the airline's quality.
+4. **Connectivity and Handling Services:** Encompasses services like 'Inflight wifi', 'Online boarding', and 'Baggage handling', which streamline the travel process and are especially valued by business and tech-savvy passengers.
 
-
-
+By leveraging insights from passenger feedback on these services, this dashboard helps airlines identify critical improvement areas, driving enhancements where most needed. This focused approach not only helps pinpoint service delivery weaknesses but also facilitates strategic upgrades, potentially boosting passenger satisfaction and loyalty significantly.
+"""
 
 
 
@@ -483,6 +489,8 @@ def perform_test(selected_column, selected_test):
 
 tab_operational_insights_layout = html.Div([
     html.Div([
+        dcc.Markdown(operational_insights_tab_info, style=text_style),
+        html.Br(),
         html.H3("Select Pre-Flight Services:"),
         html.Br(),
         
