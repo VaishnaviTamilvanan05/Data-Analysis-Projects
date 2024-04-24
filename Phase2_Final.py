@@ -12,7 +12,7 @@ from scipy import signal
 from scipy.stats import shapiro
 from scipy.stats import kstest
 from scipy.stats import normaltest
-
+import dash_bootstrap_components as dbc
 import numpy as np
 
 
@@ -112,7 +112,24 @@ def da_k_squared_test(x, title):
     return results
 
 
+############################################
 
+#Operational serivices 
+
+# Define pre-flight and in-flight services
+pre_flight_services = [
+    'Departure/Arrival time convenient', 
+    'Ease of Online booking', 
+    'Gate location', 
+    'Checkin service'
+]
+
+in_flight_categories = {
+    'Entertainment Services': ['Inflight entertainment'],
+    'Comfort Services': ['Seat comfort', 'Leg room service'],
+    'Hospitality Services': ['Food and drink', 'On-board service', 'Cleanliness'],
+    'Connectivity and Handling Services': ['Inflight wifi service', 'Online boarding', 'Baggage handling', 'Inflight service']
+}
 
 
 
@@ -459,11 +476,141 @@ def perform_test(selected_column, selected_test):
             return da_k_squared_test(data, selected_column)
     return "Please select a column and a test."
 
+#############################################################################
+
+
+#TAb4 -operational services insights
+
+tab_operational_insights_layout = html.Div([
+    html.Div([
+        html.H3("Select Pre-Flight Services:"),
+        html.Br(),
+        
+        dcc.Checklist(
+            options=[{'label': service, 'value': service} for service in pre_flight_services],
+            value=[],
+            id='pre-flight-checkboxes',
+            inline=True
+        )
+    ], className="mb-3"),
+    html.Br(),
+    
+    html.Div([
+        html.H3("Select In-Flight Service Categories:"),
+        html.Br(),
+        
+        dcc.Checklist(
+            options=[{'label': key, 'value': key} for key in in_flight_categories.keys()],
+            value=[],
+            id='in-flight-checkboxes',
+            inline=True
+        )
+    ], className="mb-3"),
+    html.Br(),
+    dbc.Button("Submit", id='submit-button', color="primary", className="mb-3"),
+    html.Br(),
+    html.Div(id='charts-container')
+], style=div_style)
+
+
+@app.callback(
+    Output('charts-container', 'children'),
+    Input('submit-button', 'n_clicks'),
+    [State('pre-flight-checkboxes', 'value'),
+     State('in-flight-checkboxes', 'value')]
+)
 
 
 
 
 
+def update_output(n_clicks, pre_flight_selected, in_flight_selected):
+    if n_clicks is None:
+        return "Please select services and click submit."
+
+    row_children = []  # This will hold all the column components for the row
+
+    # Calculate the number of total services selected
+    total_services = len(pre_flight_selected) + len(in_flight_selected)
+    if total_services == 0:
+        return "Please select at least one service to display."
+    column_width = max(2, 12 // total_services)  # Calculate width, minimum size 2 to ensure visibility
+
+    # Handling pre-flight service selections
+    if pre_flight_selected:
+        pre_flight_data = airline_df[pre_flight_selected]
+        avg_pre_flight = pre_flight_data.mean().reset_index()
+        avg_pre_flight.columns = ['Service', 'Average Rating']
+
+        for index, row in avg_pre_flight.iterrows():
+            fig = go.Figure(go.Indicator(
+                mode="gauge+number",
+                value=row['Average Rating'],
+                domain={'x': [0, 1], 'y': [0, 1]},
+                title={'text': f"{row['Service']} Satisfaction"},
+                gauge={
+                    'axis': {'range': [None, 5], 'tickwidth': 1, 'tickcolor': "darkblue"},
+                    'bar': {'color': "darkblue"},
+                    'bgcolor': "white",
+                    'borderwidth': 2,
+                    'bordercolor': "gray",
+                    'steps': [
+                        {'range': [0, row['Average Rating']], 'color': 'lightblue'},
+                        {'range': [row['Average Rating'], 5], 'color': 'lightgray'}
+                    ],
+                    'threshold': {
+                        'line': {'color': "red", 'width': 4},
+                        'thickness': 0.75,
+                        'value': row['Average Rating']}
+                }
+            ))
+            fig.update_layout(
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                title_text=f"{row['Service']} Satisfaction (Out of 5)",
+                showlegend=False
+            )
+            col = dbc.Col(dcc.Graph(figure=fig), width=column_width)
+            row_children.append(col)
+
+    # Handling in-flight service selections similarly
+    if in_flight_selected:
+        in_flight_data = pd.concat([airline_df[categories] for key in in_flight_selected for categories in in_flight_categories[key]], axis=1)
+        avg_in_flight = in_flight_data.mean().reset_index()
+        avg_in_flight.columns = ['Service', 'Average Rating']
+
+        for index, row in avg_in_flight.iterrows():
+            fig = go.Figure(go.Indicator(
+                mode="gauge+number",
+                value=row['Average Rating'],
+                domain={'x': [0, 1], 'y': [0, 1]},
+                title={'text': f"{row['Service']} Satisfaction"},
+                gauge={
+                    'axis': {'range': [None, 5], 'tickwidth': 1, 'tickcolor': "darkblue"},
+                    'bar': {'color': "darkblue"},
+                    'bgcolor': "white",
+                    'borderwidth': 2,
+                    'bordercolor': "gray",
+                    'steps': [
+                        {'range': [0, row['Average Rating']], 'color': 'lightblue'},
+                        {'range': [row['Average Rating'], 5], 'color': 'lightgray'}
+                    ],
+                    'threshold': {
+                        'line': {'color': "red", 'width': 4},
+                        'thickness': 0.75,
+                        'value': row['Average Rating']}
+                }
+            ))
+            fig.update_layout(
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                title_text=f"{row['Service']} Satisfaction (Out of 5)",
+                showlegend=False
+            )
+            col = dbc.Col(dcc.Graph(figure=fig), width=column_width)
+            row_children.append(col)
+
+    return dbc.Row(row_children)  # Return a row with all columns (charts)
 
 
 
@@ -492,6 +639,7 @@ app.layout = html.Div(style={
         dcc.Tab(label='Dataset Information', value='tab-info'),
         dcc.Tab(label='Customer Experience Overview', value='tab-1'),
         dcc.Tab(label='Normality Tests', value='tab-2'),
+        dcc.Tab(label='Operational Insights', value='tab-3')
     ]),
     html.Div(id='layout')
 ])
@@ -508,6 +656,8 @@ def update_layout(tab_name):
         return tab_customer_experience_layout
     elif tab_name == 'tab-2':
         return tab_normality_tests_layout
+    elif tab_name == 'tab-3':
+        return tab_operational_insights_layout
     else:
         return html.Div()  # Default return if no tab matches
 
