@@ -7,7 +7,6 @@ from dash.dependencies import Input, Output
 from dash import html, dcc, Input, Output, State
 import plotly.express as px
 import plotly.graph_objects as go
-import dash_table
 from scipy import signal
 from scipy.stats import shapiro
 from scipy.stats import kstest
@@ -159,7 +158,9 @@ def create_gender_distribution_chart(df,selected_gender=None):
                                  hole=0.4, textinfo='label+percent', marker=dict(colors=px.colors.sequential.Blues_r))])
     fig.update_traces(textposition='inside')
     fig.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-                      showlegend=True, margin=dict(t=50, l=25, r=25, b=25))
+                      showlegend=True, margin=dict(t=50, l=25, r=30, b=25),
+                      legend=dict(x=1, y=0.5, xanchor='left', yanchor='middle'), width=350,  # Set the width of the figure
+        height=450)
     return fig
 
 
@@ -178,7 +179,8 @@ def create_class_distribution_chart(df, selected_class=None,selected_gender=None
         orientation='h',
         text=class_counts['Count'],
         textposition='inside',
-        marker_color=colors  # Apply the conditional colors here
+        marker_color=colors,  # Apply the conditional colors here
+
     )])
     fig.update_layout(
         plot_bgcolor='rgba(0,0,0,0)',
@@ -784,7 +786,8 @@ airline_df_new.columns = ['Age Group', 'Satisfaction Rate']
 fig_pie_initial = px.pie(airline_df, names='Age Group', title='Passenger Age Distribution')
 fig_pie_initial.update_layout(
         paper_bgcolor='rgba(0,0,0,0)',  # Set to transparent
-        plot_bgcolor='rgba(0,0,0,0)'    # Set to transparent
+        plot_bgcolor='rgba(0,0,0,0)' ,   # Set to transparent
+        legend=dict(x=1, y=0.5, xanchor='auto', yanchor='auto')
     )
 fig_bar_initial = px.bar(airline_df_new, x='Age Group', y='Satisfaction Rate', title='Satisfaction Rate by Age Group',
                          )
@@ -836,12 +839,22 @@ def highlight_selected_age_group(pie_click_data):
 
 #####################################################################
 
+Summary_insights= """
+- The data reveals that pre-flight services like 'Ease of Online Booking' and 'Gate Location' have an average satisfaction rating below 3, while 'Inflight WiFi Service' also scores poorly. Airlines could use this insight to focus on improving these areas, enhancing the overall passenger experience, boosting satisfaction, and potentially increasing loyalty and competitive advantage.
+
+- Passenger satisfaction increases with the length of the flight, with short-haul flights showing the highest dissatisfaction rates. Airlines can enhance satisfaction on these flights by improving seat comfort and speeding up the boarding process, making short journeys more comfortable and efficient for travelers.
+
+- The flights with no departure or arrival delays have the highest satisfaction count, while significant dissatisfaction arises when either departure or arrival delays exceed 20 minutes. It indicates that on-time performance is a critical factor in passenger satisfaction. To improve satisfaction, airlines should prioritize punctuality and manage delays effectively.
+
+- The data indicates that passenger satisfaction is considerably higher in the 41-65 age group, potentially due to the higher likelihood of business class travel within this demographic. On the other hand, the lower satisfaction rates observed in the youngest and oldest age brackets suggest a need for airlines to focus on age-specific amenities and services to improve their travel experience.
+"""
+
 tab_feedback_summary_layout=html.Div([
     html.H1('Summary of Insights'),
-    html.P('Here you can provide a detailed summary of the insights derived from the analysis.'),
+    dcc.Markdown(Summary_insights, style=text_style),
 
     html.H2('About the Author'),
-    html.P('This section can include a brief bio of the author, their qualifications, and any relevant background information.'),
+    html.P('This web application was developed by Vaishnavi Tamilvanan for the Visualization of Complex Data DATS 6401 Final Term Project. Your suggestions and feedback are highly valued; please do not hesitate to reach out via email at Vaishnavi.tamilvanan@gwmail.gwu.edu.'),
 
     html.H2('Feedback'),
     html.P('Please provide your suggestions for improvements or additional features you would like to see:'),
