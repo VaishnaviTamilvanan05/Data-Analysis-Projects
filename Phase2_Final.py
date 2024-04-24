@@ -8,11 +8,31 @@ from dash import html, dcc, Input, Output, State
 import plotly.express as px
 import plotly.graph_objects as go
 import dash_table
+from scipy import signal
+from scipy.stats import shapiro
+from scipy.stats import kstest
+from scipy.stats import normaltest
+
+import numpy as np
+
+
+
+
+
+
+
+
+
 
 #read dataset transformed
 df = pd.read_csv('/Users/vaishnavitamilvanan/Documents/Spring 2024/Visualization/Project/Visualization-of-Complex-Data-DATS-6401/Airline_passenger_data_cleaned.csv')
 # Read dataset orginal
 airline_df = pd.read_csv('/Users/vaishnavitamilvanan/Documents/Spring 2024/Visualization/Project/Visualization-of-Complex-Data-DATS-6401/Airline_Passenger_Satisfaction.csv')
+
+
+
+
+
 
 # Counting satisfied and not satisfied responses
 satisfaction_counts = airline_df['satisfaction'].value_counts().to_dict()
@@ -21,9 +41,91 @@ total_passengers = airline_df.shape[0]
 dataset_info = f"The Airline Passenger Satisfaction dataset contains information about the satisfaction levels of over {total_passengers} airline passengers. The dataset includes details about each passenger's flight, such as class, customer type, travel type, as well as their assessments of various factors like food, service, cleanliness, and seat comfort. This comprehensive dataset allows for in-depth analysis of the key drivers of passenger satisfaction and can help airlines identify areas for improvement to enhance the overall travel experience."
 
 
+
+################################################
+
+#Data Cleaning
+
+#################################################
+
+#check null values
+airline_df.isnull().sum()
+
+######## Handle Missing Values ########
+
+# Imputing missing value with mean
+airline_df['Arrival Delay in Minutes'] = airline_df['Arrival Delay in Minutes'].fillna(airline_df['Arrival Delay in Minutes'].mean())
+airline_df.isnull().sum()
+
+# Check the list of categorical variables
+cat_variables = airline_df.select_dtypes(include=['object']).columns
+# Count the number of NaN values in each categorical variable
+nan_counts = airline_df[cat_variables].isnull().sum()
+#######drop unnecessary columns #########
+airline_df = airline_df.drop('Unnamed: 0', axis=1)
+airline_df = airline_df.drop('id', axis=1)
+
+
+
+
+
+
 # Counting satisfied and not satisfied responses
 satisfaction_counts = df['satisfaction'].value_counts().to_dict()
 total_passengers = df.shape[0]
+
+
+################################################
+#NORMALITY TESTS
+
+def shapiro_test(x, title):
+    stats, p = shapiro(x)
+    results = f"Shapiro test: {title} dataset: statistics = {stats:.2f}, p-value = {p:.2f}"
+    alpha = 0.01
+    if p > alpha:
+        results += "\nShapiro test: Normal distribution."
+    else:
+        results += "\nShapiro test: NOT Normal distribution."
+    return results
+
+def ks_test(x, title):
+    mean = np.mean(x)
+    std = np.std(x)
+    dist = np.random.normal(mean, std, len(x))
+    stats, p = kstest(x, dist)
+    results = f"K-S test: {title} dataset: statistics = {stats:.2f}, p-value = {p:.2f}"
+    alpha = 0.01
+    if p > alpha:
+        results += "\nK-S test: Normal distribution."
+    else:
+        results += "\nK-S test: NOT Normal distribution."
+    return results
+
+def da_k_squared_test(x, title):
+    stats, p = normaltest(x)
+    results = f"Da'gostino's K-squared test: {title} dataset: statistics = {stats:.2f}, p-value = {p:.2f}"
+    alpha = 0.01
+    if p > alpha:
+        results += "\nDa'gostino's K-squared test: Normal distribution."
+    else:
+        results += "\nDa'gostino's K-squared test: NOT Normal distribution."
+    return results
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+############################################
+#Charts
 
 def create_gender_distribution_chart(df,selected_gender=None):
     if selected_gender:
@@ -309,6 +411,53 @@ def update_graph_based_on_inputs(clickData_gender, satisfaction_value, customer_
 ###################################################################
 
 
+#Tab3 -NTests
+
+tab_normality_tests_layout = html.Div([
+                html.H3('Select variable to perform Normality Tests'),
+                html.Br(),
+                dcc.Dropdown(
+                    id='column-dropdown',
+                    options=[{'label': col, 'value': col} for col in airline_df.select_dtypes(include=[np.number]).columns],
+                    value=None,
+                    placeholder="Select a column"
+                ),
+                html.Br(),
+                html.Br(),
+                html.H3('Select a normality test to perform on the selected variable'),
+                html.Br(),
+                dcc.Dropdown(
+                    id='test-dropdown',
+                    options=[
+                        {'label': 'Shapiro-Wilk Test', 'value': 'shapiro'},
+                        {'label': 'Kolmogorov-Smirnov Test', 'value': 'ks'},
+                        {'label': "D'Agostino's K-squared Test", 'value': 'dagostino'}
+                    ],
+                    value=None,
+                    placeholder="Select a normality test"
+                ),
+                html.Br(),
+                html.Br(),
+                html.Div(id='test-result')
+            ],style=div_style)
+
+
+@app.callback(
+    Output('test-result', 'children'),
+    [Input('column-dropdown', 'value'),
+     Input('test-dropdown', 'value')]
+)
+
+def perform_test(selected_column, selected_test):
+    if selected_column and selected_test:
+        data = airline_df[selected_column]
+        if selected_test == 'shapiro':
+            return shapiro_test(data, selected_column)
+        elif selected_test == 'ks':
+            return ks_test(data, selected_column)
+        elif selected_test == 'dagostino':
+            return da_k_squared_test(data, selected_column)
+    return "Please select a column and a test."
 
 
 
@@ -318,12 +467,8 @@ def update_graph_based_on_inputs(clickData_gender, satisfaction_value, customer_
 
 
 
-
-
-
-
-
-# App layout
+######################################################################
+# Home App layout
 app.layout = html.Div(style={
     'backgroundImage': f'url("{background_image_url}")',
     'backgroundSize': 'cover',
@@ -345,7 +490,8 @@ app.layout = html.Div(style={
     html.Br(),
     dcc.Tabs(id='finalproject', children=[
         dcc.Tab(label='Dataset Information', value='tab-info'),
-        dcc.Tab(label='Customer Experience Overview', value='tab-1')
+        dcc.Tab(label='Customer Experience Overview', value='tab-1'),
+        dcc.Tab(label='Normality Tests', value='tab-2'),
     ]),
     html.Div(id='layout')
 ])
@@ -360,6 +506,8 @@ def update_layout(tab_name):
         return tab_info_layout
     elif tab_name == 'tab-1':
         return tab_customer_experience_layout
+    elif tab_name == 'tab-2':
+        return tab_normality_tests_layout
     else:
         return html.Div()  # Default return if no tab matches
 
