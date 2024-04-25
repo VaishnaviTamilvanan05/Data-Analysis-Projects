@@ -13,13 +13,9 @@ from scipy.stats import kstest
 from scipy.stats import normaltest
 import dash_bootstrap_components as dbc
 import numpy as np
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
+
 import plotly.figure_factory as ff
-from sklearn.decomposition import PCA
 
-
-import scipy.stats as stats
 
 
 #read dataset transformed
@@ -71,9 +67,6 @@ airline_df = airline_df.drop('id', axis=1)
 # Counting satisfied and not satisfied responses
 satisfaction_counts = df['satisfaction'].value_counts().to_dict()
 total_passengers = df.shape[0]
-
-#########################################################################
-
 
 
 ################################################
@@ -200,6 +193,9 @@ def create_class_distribution_chart(df, selected_class=None,selected_gender=None
 
 # Initialize the app with external CSS for Bootstrap
 app = dash.Dash(__name__, external_stylesheets=['https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap'], suppress_callback_exceptions=True)
+
+server = app.server
+
 #background cloud img
 background_image_url = '/assets/background.png'  
 
@@ -441,74 +437,51 @@ def update_graph_based_on_inputs(clickData_gender, satisfaction_value, customer_
 
 #Tab3 -NTests
 
-# Assume you have already defined div_style somewhere in your code
 tab_normality_tests_layout = html.Div([
-    html.H3('Select variable to perform Normality Tests'),
-    html.Br(),
-    dcc.Dropdown(
-        id='column-dropdown',
-        options=[{'label': col, 'value': col} for col in airline_df.select_dtypes(include=[np.number]).columns],
-        value=None,
-        placeholder="Select a column"
-    ),
-    html.Br(),
-    html.H3('Select a normality test to perform on the selected variable'),
-    html.Br(),
-    dcc.Dropdown(
-        id='test-dropdown',
-        options=[
-            {'label': 'Shapiro-Wilk Test', 'value': 'shapiro'},
-            {'label': 'Kolmogorov-Smirnov Test', 'value': 'ks'},
-            {'label': "D'Agostino's K-squared Test", 'value': 'dagostino'}
-        ],
-        value=None,
-        placeholder="Select a normality test"
-    ),
-    html.Br(),
-    dcc.Graph(id='normal-distribution-graph'),
-    html.Br(),
-    html.Div(id='test-result')
-], style=div_style)
-
-
+                html.H3('Select variable to perform Normality Tests'),
+                html.Br(),
+                dcc.Dropdown(
+                    id='column-dropdown',
+                    options=[{'label': col, 'value': col} for col in airline_df.select_dtypes(include=[np.number]).columns],
+                    value=None,
+                    placeholder="Select a column"
+                ),
+                html.Br(),
+                html.Br(),
+                html.H3('Select a normality test to perform on the selected variable'),
+                html.Br(),
+                dcc.Dropdown(
+                    id='test-dropdown',
+                    options=[
+                        {'label': 'Shapiro-Wilk Test', 'value': 'shapiro'},
+                        {'label': 'Kolmogorov-Smirnov Test', 'value': 'ks'},
+                        {'label': "D'Agostino's K-squared Test", 'value': 'dagostino'}
+                    ],
+                    value=None,
+                    placeholder="Select a normality test"
+                ),
+                html.Br(),
+                html.Br(),
+                html.Div(id='test-result')
+            ],style=div_style)
 
 
 @app.callback(
-    [Output('test-result', 'children'),
-     Output('normal-distribution-graph', 'figure')],
+    Output('test-result', 'children'),
     [Input('column-dropdown', 'value'),
      Input('test-dropdown', 'value')]
 )
-def update_output(selected_column, selected_test):
-    if not selected_column:
-        return "Please select a column to proceed.", {}
-    
-    data = airline_df[selected_column].dropna()
-    fig = plot_distribution(data, selected_column)
-    
-    if not selected_test:
-        return "Please select a test to proceed.", fig
 
-    if selected_test == 'shapiro':
-        result = shapiro_test(data, selected_column)
-    elif selected_test == 'ks':
-        result = ks_test(data, selected_column)
-    elif selected_test == 'dagostino':
-        result = da_k_squared_test(data, selected_column)
-    else:
-        return "Test not implemented.", fig
-
-    return result, fig
-
-def plot_distribution(data, column_name):
-    fig = px.histogram(data, x=column_name, marginal='box', nbins=50)
-    mean = np.mean(data)
-    std_dev = np.std(data)
-    x = np.linspace(mean - 3*std_dev, mean + 3*std_dev, 100)
-    y = stats.norm.pdf(x, mean, std_dev)
-    fig.add_trace(go.Scatter(x=x, y=y, mode='lines', name='Normal Fit'))
-    return fig
-
+def perform_test(selected_column, selected_test):
+    if selected_column and selected_test:
+        data = airline_df[selected_column]
+        if selected_test == 'shapiro':
+            return shapiro_test(data, selected_column)
+        elif selected_test == 'ks':
+            return ks_test(data, selected_column)
+        elif selected_test == 'dagostino':
+            return da_k_squared_test(data, selected_column)
+    return "Please select a column and a test."
 
 #############################################################################
 
@@ -902,115 +875,6 @@ def update_output(n_clicks, value):
     if n_clicks > 0:
         return 'Thank you for your feedback!'
     return ''
-###################################################################
-
-#PCA
-
-
-
-# Standardize the features
-scaler = StandardScaler()
-features_scaled = scaler.fit_transform(airline_df.select_dtypes(include=[np.number]))
-
-
-
-# # Perform PCA
-# pca = PCA()
-# pca_data = pca.fit_transform(features_scaled)
-
-
-
-# Layout
-PCA_tab_layout = html.Div([
-    html.Div([
-        dcc.RadioItems(
-            id='pca-space-selector',
-            options=[
-                {'label': 'Original Space', 'value': 'original'},
-                {'label': 'Transformed Space', 'value': 'transformed'}
-            ],
-            value='original'
-        ),
-        html.Br(),  # Break line for spacing
-        html.Div(id='pca-details'),
-        html.Br(),  # Break line for spacing
-        dcc.Graph(id='pca-explained-variance'),
-        html.Br(),  # Break line for spacing
-        dcc.Graph(id='pca-correlation-matrix')
-    ], style=div_style)
-])
-
-@app.callback(
-    Output('pca-details', 'children'),
-    Output('pca-explained-variance', 'figure'),
-    Output('pca-correlation-matrix', 'figure'),
-    Input('pca-space-selector', 'value')
-)
-def update_pca_analysis(space):
-    pca = PCA()
-    pca.fit(features_scaled)
-    
-    if space == 'original':
-        details = (
-            f"Features: {df.columns.tolist()}, Original shape: {df.shape}, "
-            f"Singular values: {pca.singular_values_}, Condition number: {np.max(pca.singular_values_) / np.min(pca.singular_values_)}"
-        )
-        explained_variance_fig = px.line(
-            y=np.cumsum(pca.explained_variance_ratio_),
-            title='Cumulative Explained Variance',
-            labels={'y': 'Cumulative Explained Variance', 'x': 'Number of Components'}
-        )
-        correlation_matrix_fig = px.imshow(
-            np.corrcoef(features_scaled, rowvar=False),
-            title='PCA Features Correlation Matrix',
-            labels={'color': 'Correlation'}
-        )
-    else:
-        transformed_features = pca.transform(features_scaled)
-        details = (
-            f"Transformed Features Shape: {transformed_features.shape}, "
-            f"Singular values (transformed space): {pca.singular_values_}"
-        )
-        explained_variance_fig = px.line(
-            y=np.cumsum(pca.explained_variance_ratio_),
-            title='Cumulative Explained Variance',
-            labels={'y': 'Cumulative Explained Variance', 'x': 'Number of Components'}
-        )
-        correlation_matrix_fig = px.imshow(
-            np.corrcoef(transformed_features, rowvar=False),
-            title='PCA Features Correlation Matrix',
-            labels={'color': 'Correlation'}
-        )
-
-    return details, explained_variance_fig, correlation_matrix_fig
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 ######################################################################
@@ -1054,9 +918,7 @@ app.layout = html.Div(style={
         dcc.Tab(label='Operational Insights', value='tab-3'),
         dcc.Tab(label='Flight Metrics Explorer', value='tab-4'),
         dcc.Tab(label='Demographic Insights', value='tab-5'),
-        dcc.Tab(label='PCA Analysis', value='tab-7'),
         dcc.Tab(label='Feedback & Summary', value='tab-6')
-        
     ]),
     html.Div(id='layout')
 ])
@@ -1081,11 +943,11 @@ def update_layout(tab_name):
         return tab_demographic_insights_layout
     elif tab_name == 'tab-6':
         return tab_feedback_summary_layout
-    elif tab_name == 'tab-7':
-        return PCA_tab_layout
     else:
         return html.Div()  # Default return if no tab matches
 
-# Run server
+####################################################################################################
+#run server
+
 if __name__ == '__main__':
-    app.run_server(debug=True, port=8080)
+     app.run_server(debug=True, host='0.0.0.0', port=8085)
