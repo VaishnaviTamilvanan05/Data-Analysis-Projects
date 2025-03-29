@@ -1,0 +1,302 @@
+---
+title: "Data Brew: Brewing Success with Starbucks Customer Insights"
+subtitle: "TEAM 6 - Chekitha Swayampu, Hrushikesh Sai Seshagiri Chowdary Uppalapati, Swathi Murali Srinivasan, Vaishnavi Tamilvanan"
+date: "2023-10-20"
+output:
+  prettydoc::html_pretty:
+    theme: hpstr
+    toc: true
+  pdf_document:
+    toc: yes
+    toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Load required libraries
+library(jsonlite)
+library(dplyr)
+
+# Load data
+portfolio <- read.csv("data/portfolio.csv", row.names = 1)
+profile <- read.csv("data/profile.csv", row.names = 1)
+transcript <- read.csv("data/transcript.csv", row.names =1)
+```
+
+## DATA CLEANING AND PREPROCESSING
+```{r}
+# Check the structure of each dataset
+str(portfolio)
+str(profile)
+str(transcript)
+
+# Check summary statistics
+summary(portfolio)
+summary(profile)
+summary(transcript)
+
+# Check for missing values
+sum(is.na(portfolio))
+sum(is.na(profile))
+sum(is.na(transcript))
+```
+
+
+```{r}
+# PORTFOLIO DATA
+# Clean up 'channels' column
+portfolio$channels <- gsub("\\[|\\]|'", "", portfolio$channels)
+
+# Convert 'channels' to a list
+portfolio$channels <- lapply(strsplit(portfolio$channels, ","), trimws)
+
+# Extract unique channels
+unique_channels <- unique(unlist(portfolio$channels))
+
+# Create binary columns for each channel
+for (channel in unique_channels) {
+  # Remove leading and trailing spaces
+  cleaned_channel <- trimws(channel)
+  
+  # Create binary columns for each cleaned channel
+  portfolio[paste0("channel_", cleaned_channel)] <- as.integer(sapply(portfolio$channels, function(x) cleaned_channel %in% x))
+}
+
+portfolio
+```
+
+
+```{r}
+# PROFILE 
+# Convert 'gender' to factor
+profile$gender <- as.factor(profile$gender)
+
+# Impute missing values in 'income' with mean
+profile$income[is.na(profile$income)] <- mean(profile$income, na.rm = TRUE)
+# Check unique values in 'became_member_on' to identify any issues
+unique(profile$became_member_on)
+
+# Remove any non-numeric characters
+profile$became_member_on <- gsub("[^0-9]", "", profile$became_member_on)
+
+# Convert 'became_member_on' to Date
+profile$became_member_on <- as.Date(profile$became_member_on, format = "%Y%m%d")
+
+head(profile)
+```
+```{r}
+head(transcript)
+
+```
+
+```{r}
+# TRANSCRIPT 
+# Load the jsonlite library
+library(jsonlite)
+
+# Extract offer id from 'value' column
+transcript$value <- gsub("'", "\"", transcript$value)  # Replace single quotes with double quotes
+transcript$offer_id <- sapply(transcript$value, function(x) {
+  parsed_value <- fromJSON(x, simplifyVector = TRUE)
+  if (!is.null(parsed_value) && 'offer id' %in% names(parsed_value)) {
+    return(parsed_value[['offer id']])
+  } else {
+    return(NA)
+  }
+})
+
+# Drop the 'value' column as we've extracted the offer id
+transcript <- subset(transcript, select = -c(value))
+
+
+
+```
+
+
+```{r}
+head(transcript)
+```
+## FEATURE ENTINEERING
+
+```{r}
+# FE PROFILE 
+
+# Calculate membership duration in days
+profile$membership_duration <- as.numeric(difftime(Sys.Date(), profile$became_member_on, units = "days"))
+head(profile)
+```
+
+
+```{r}
+# FE TRANSCRIPT
+head(transcript)
+
+# Create binary columns for different events
+transcript$offer_received <- as.integer(transcript$event == "offer received")
+transcript$offer_viewed <- as.integer(transcript$event == "offer viewed")
+transcript$offer_completed <- as.integer(transcript$event == "offer completed")
+transcript$transaction <- as.integer(transcript$event == "transaction")
+
+```
+
+
+```{r}
+head(transcript)
+```
+
+## MERGING DATA
+```{r}
+# Merge profile and transcript datasets based on 'id' (customer ID)
+merged_data <- merge(profile, transcript, by.x = "id", by.y = "person", all.x = TRUE)
+
+# Merge the resulting dataset with the portfolio dataset based on 'offer_id'
+merged_data <- merge(merged_data, portfolio, by.x = "offer_id", by.y = "id", all.x = TRUE)
+
+# Check the structure and summary of the merged dataset
+str(merged_data)
+summary(merged_data)
+```
+
+
+```{r}
+merged_data
+```
+
+## K-MEANS CLUSTERING
+
+```{r}
+# Select relevant features for clustering
+features_for_clustering <- merged_data[, c("age", "income", "membership_duration", "reward", "difficulty", "duration")]
+
+# Check for missing values
+if (any(sapply(features_for_clustering, function(x) any(is.na(x))))) {
+  # Impute missing values with mean
+  features_for_clustering <- lapply(features_for_clustering, function(x) {
+    x[is.na(x)] <- mean(x, na.rm = TRUE)
+    x
+  })
+}
+
+# Convert the list to a data frame
+features_for_clustering <- as.data.frame(features_for_clustering)
+
+# Check for infinite values
+if (any(sapply(features_for_clustering, function(x) any(!is.finite(x))))) {
+  # Replace infinite values with appropriate values or investigate the cause
+  features_for_clustering <- lapply(features_for_clustering, function(x) {
+    x[!is.finite(x)] <- 0
+    x
+  })
+}
+
+# Standardize the features after handling missing and infinite values
+scaled_features <- scale(features_for_clustering)
+
+# Check for missing or infinite values after scaling
+any(is.na(scaled_features))
+any(!is.finite(scaled_features))
+```
+
+```{r}
+# Elbow Method to find the optimal number of clusters
+wss <- numeric(4)  # Set the maximum number of clusters you want to try (e.g., 10)
+
+for (i in 1:4) {
+  kmeans_result <- kmeans(scaled_features, centers = i)
+  wss[i] <- kmeans_result$tot.withinss
+}
+
+# Plot the elbow curve
+plot(1:4, wss, type = "b", pch = 19, frame = FALSE, 
+     xlab = "Number of Clusters", ylab = "Total Within-Cluster Sum of Squares",
+     main = "Elbow Method")
+
+# Add a line at the "elbow" or optimal number of clusters
+abline(v = which.min(wss), col = "red", lty = 2)
+
+# Print the optimal number of clusters
+cat("Optimal Number of Clusters:", which.min(wss), "\n")
+
+
+```
+
+```{r}
+# Example: K-means clustering with k clusters
+k <- 4  # Replace with your desired number of clusters
+kmeans_result <- kmeans(scaled_features, centers = k)
+
+# View the clustering results
+str(kmeans_result)
+
+# Assign cluster labels to each observation in your data
+merged_data$cluster <- kmeans_result$cluster
+
+# Check the distribution of clusters
+table(merged_data$cluster)
+
+# Explore the characteristics of each cluster
+cluster_summary <- aggregate(. ~ cluster, data = merged_data[, c("cluster", "age", "income", "membership_duration", "reward", "difficulty", "duration")], mean)
+print(cluster_summary)
+
+```
+
+
+```{r}
+# Bar plot of cluster distribution
+barplot(table(merged_data$cluster), main = "Cluster Distribution", xlab = "Cluster", ylab = "Count", col = rainbow(k))
+```
+
+
+
+```{r}
+
+```
+
+
+
+```{r}
+
+
+```
+
+
+
+```{r}
+
+
+```
+
+
+```{r}
+
+
+```
+
+
+
+```{r}
+
+
+```
+
+
+```{r}
+
+
+```
+
+
+```{r}
+
+
+```
+
+
+```{r}
+
+
+```
+
